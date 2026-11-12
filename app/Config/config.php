@@ -4,23 +4,32 @@ declare(strict_types=1);
 
 use App\Core\Env;
 
+// PaaS platforms expose their public URL under different names. APP_URL always wins.
+$appUrl = (string) (Env::get('APP_URL') ?: '');
+if ($appUrl === '') {
+    $appUrl = (string) (Env::get('RENDER_EXTERNAL_URL') ?: '');
+}
+if ($appUrl === '' && ($railwayDomain = Env::get('RAILWAY_PUBLIC_DOMAIN')) !== null && $railwayDomain !== '') {
+    $appUrl = 'https://' . $railwayDomain;
+}
+
 return [
     'app' => [
         'name' => Env::get('APP_NAME', 'Thunder Mounts'),
         'env' => Env::get('APP_ENV', 'production'),
         'debug' => filter_var(Env::get('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOL),
-        'url' => rtrim((string) Env::get('APP_URL', ''), '/'),
+        'url' => rtrim($appUrl, '/'),
         'base_path' => rtrim((string) Env::get('APP_BASE_PATH', ''), '/'),
         'timezone' => Env::get('APP_TIMEZONE', 'America/Los_Angeles'),
         'key' => (string) Env::get('APP_KEY', ''),
     ],
     'database' => [
         'driver' => Env::get('DB_DRIVER', 'mysql'),
-        'host' => Env::get('DB_HOST', 'localhost'),
-        'port' => (int) Env::get('DB_PORT', '3306'),
-        'database' => Env::get('DB_DATABASE', ''),
-        'username' => Env::get('DB_USERNAME', ''),
-        'password' => Env::get('DB_PASSWORD', ''),
+        'host' => Env::get('DB_HOST') ?: Env::get('MYSQLHOST', 'localhost'),
+        'port' => (int) (Env::get('DB_PORT') ?: Env::get('MYSQLPORT', '3306')),
+        'database' => Env::get('DB_DATABASE') ?: Env::get('MYSQLDATABASE', ''),
+        'username' => Env::get('DB_USERNAME') ?: Env::get('MYSQLUSER', ''),
+        'password' => Env::get('DB_PASSWORD') ?: Env::get('MYSQLPASSWORD', ''),
         'charset' => Env::get('DB_CHARSET', 'utf8mb4'),
         'sqlite_path' => Env::get('DB_SQLITE_PATH', dirname(__DIR__, 2) . '/storage/database.sqlite'),
     ],
