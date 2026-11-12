@@ -38,9 +38,8 @@ $nav = [
   <div class="admin-shell">
     <aside class="admin-side" id="admin-side">
       <div class="admin-brand">
-        <a class="brand tm-brand tm-brand-light" href="<?= url('/admin') ?>">
-          <span class="tm-bolt" aria-hidden="true"><svg viewBox="0 0 40 48" fill="none"><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" fill="#C82026"/></svg></span>
-          <span class="tm-wordmark">THUNDER<span>MOUNTS<small>Admin</small></span></span>
+        <a class="brand tm-brand tm-brand-light" href="<?= url('/admin') ?>" aria-label="Thunder Mounts admin">
+          <img class="brand-logo brand-logo-pill" src="<?= asset('img/thundermounts-logo.jpg') ?>" alt="Thunder Mounts — Garage Systems" width="705" height="173">
         </a>
         <button class="admin-side-close" type="button" data-admin-menu aria-label="Close menu">&times;</button>
       </div>
@@ -74,23 +73,46 @@ $nav = [
         </div>
       </header>
 
-      <?php $flashes = $flashMessages ?? []; ?>
+      <?php $flashes = array_filter($flashMessages ?? [], 'is_array'); ?>
       <?php if ($flashes !== []): ?>
-        <div class="admin-flash" role="status" aria-live="polite">
-          <?php foreach ($flashes as $flash): ?>
-            <div class="flash flash-<?= e($flash['type']) ?>">
-              <?= icon($flash['type'] === 'success' ? 'check' : 'bell') ?>
-              <span><?= e($flash['message']) ?></span>
-              <button type="button" class="flash-close" aria-label="Dismiss" data-flash-close>&times;</button>
+      <div class="toast-wrap admin-flash" data-toast-wrap role="status" aria-live="polite">
+        <?php foreach ($flashes as $flash): ?>
+          <?php $flashType = in_array($flash['type'] ?? '', ['success', 'error', 'info'], true) ? $flash['type'] : 'info'; ?>
+          <div class="toast flash flash-<?= e($flashType) ?>" role="<?= $flashType === 'error' ? 'alert' : 'status' ?>" data-flash-auto>
+            <?= icon($flashType === 'success' ? 'check' : ($flashType === 'error' ? 'bell' : 'shield')) ?>
+            <div class="flash-copy">
+              <strong><?= $flashType === 'success' ? 'Success' : ($flashType === 'error' ? 'Please check' : 'Notice') ?></strong>
+              <span><?= e($flash['message'] ?? '') ?></span>
             </div>
-          <?php endforeach; ?>
-        </div>
+            <button type="button" class="flash-close" aria-label="Dismiss" data-flash-close>&times;</button>
+          </div>
+        <?php endforeach; ?>
+      </div>
       <?php endif; ?>
 
       <main class="admin-content"><?= $content ?></main>
     </div>
   </div>
   <div class="admin-backdrop" data-admin-menu hidden></div>
+
+  <!-- Confirm dialog (replaces native confirm()) -->
+  <div class="modal-wrap" id="confirm-modal" aria-hidden="true" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
+    <div class="modal-backdrop" data-close-confirm></div>
+    <div class="modal modal-confirm">
+      <div class="modal-head">
+        <h3 id="confirm-modal-title" style="margin:0">Please confirm</h3>
+        <button class="close-x" type="button" data-close-confirm aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message" class="confirm-message" style="margin:0"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" type="button" data-close-confirm>Cancel</button>
+        <button class="btn btn-danger confirm-accept" type="button" data-confirm-accept>Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script src="<?= asset('js/app.js') ?>" defer></script>
   <script src="<?= asset('js/admin.js') ?>" defer></script>
   <?= $scripts ?? '' ?>

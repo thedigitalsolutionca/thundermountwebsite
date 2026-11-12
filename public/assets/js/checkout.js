@@ -49,7 +49,10 @@
 
   function showErrors(errors) {
     if (!errorBox) {
-      window.alert(errors.join('\n'));
+      var fallback = (Array.isArray(errors) ? errors : [errors]).join(' · ');
+      if (window.TM && typeof window.TM.toast === 'function') {
+        window.TM.toast(fallback, 'error');
+      }
       return;
     }
     var list = document.createElement('ul');

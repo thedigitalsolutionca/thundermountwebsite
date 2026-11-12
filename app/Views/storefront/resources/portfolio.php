@@ -20,15 +20,15 @@ $projects = [
   <div class="container">
     <div class="portfolio-grid">
       <?php foreach ($projects as $index => $project): ?>
-        <figure class="portfolio-tile<?= $index === 0 ? ' featured' : '' ?>">
-          <a href="<?= asset('img/' . $project['image']) ?>" target="_blank" rel="noopener" aria-label="Open full image: <?= e($project['title']) ?>">
-            <img src="<?= asset('img/' . $project['image']) ?>" alt="<?= e($project['alt']) ?>" loading="<?= $index === 0 ? 'eager' : 'lazy' ?>" width="920" height="640">
+        <figure class="portfolio-tile">
+          <a href="<?= asset('img/' . $project['image']) ?>" data-lightbox="portfolio" data-lightbox-title="<?= e($project['title']) ?>" data-lightbox-detail="<?= e($project['detail']) ?>" aria-label="View larger photo: <?= e($project['title']) ?>">
+            <img src="<?= asset('img/' . $project['image']) ?>" alt="<?= e($project['alt']) ?>" loading="<?= $index === 0 ? 'eager' : 'lazy' ?>" width="920" height="690">
           </a>
           <figcaption><strong><?= e($project['title']) ?></strong><span><?= e($project['detail']) ?></span></figcaption>
         </figure>
       <?php endforeach; ?>
     </div>
-    <p class="small muted mt-2">Select any photo to open a larger view. Every installation is different; confirm product fitment and structural requirements for your own project.</p>
+    <p class="small muted mt-2">Select any photo to view it larger — no new tab required. Every installation is different; confirm product fitment and structural requirements for your own project.</p>
   </div>
 </section>
 <section class="section section-gray">

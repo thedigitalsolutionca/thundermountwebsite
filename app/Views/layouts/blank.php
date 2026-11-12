@@ -11,10 +11,7 @@
   <header class="site-header">
     <div class="container inner">
       <a class="brand tm-brand" href="<?= url('/') ?>" aria-label="Thunder Mounts home">
-        <span class="tm-bolt" aria-hidden="true">
-          <svg viewBox="0 0 40 48" fill="none"><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" fill="#C82026"/><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" stroke="#181818" stroke-width="1.5"/></svg>
-        </span>
-        <span class="tm-wordmark">THUNDER<span>MOUNTS<small>Garage Systems</small></span></span>
+        <img class="brand-logo" src="<?= asset('img/thundermounts-logo.jpg') ?>" alt="Thunder Mounts — Garage Systems" width="705" height="173">
       </a>
       <a class="btn btn-outline btn-sm" href="<?= url('/shop') ?>">Shop</a>
     </div>

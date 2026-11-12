@@ -97,10 +97,7 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
   <header class="site-header">
     <div class="container inner">
       <a class="brand tm-brand" href="<?= url('/') ?>" aria-label="Thunder Mounts home">
-        <span class="tm-bolt" aria-hidden="true">
-          <svg viewBox="0 0 40 48" fill="none"><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" fill="#C82026"/><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" stroke="#181818" stroke-width="1.5"/></svg>
-        </span>
-        <span class="tm-wordmark">THUNDER<span>MOUNTS<small>Garage Systems</small></span></span>
+        <img class="brand-logo" src="<?= asset('img/thundermounts-logo.jpg') ?>" alt="Thunder Mounts — Garage Systems" width="705" height="173">
       </a>
 
       <nav class="nav-main" aria-label="Main navigation">
@@ -185,8 +182,7 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
       <div class="cols">
         <div class="footer-brand">
           <a class="brand tm-brand tm-brand-light" href="<?= url('/') ?>" aria-label="Thunder Mounts home">
-            <span class="tm-bolt" aria-hidden="true"><svg viewBox="0 0 40 48" fill="none"><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" fill="#C82026"/></svg></span>
-            <span class="tm-wordmark">THUNDER<span>MOUNTS<small>Garage Systems</small></span></span>
+            <img class="brand-logo brand-logo-pill" src="<?= asset('img/thundermounts-logo.jpg') ?>" alt="Thunder Mounts — Garage Systems" width="705" height="173">
           </a>
           <p style="margin-top:16px"><?= e($tagline) ?></p>
           <p class="small">
@@ -308,6 +304,42 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
         <button class="close-x" type="button" data-close-quick-view aria-label="Close quick view">&times;</button>
       </div>
       <div data-quick-view-body></div>
+    </div>
+  </div>
+
+  <!-- Image lightbox -->
+  <div class="lightbox-wrap" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+    <div class="lightbox-backdrop" data-close-lightbox></div>
+    <figure class="lightbox">
+      <button class="close-x lightbox-close" type="button" data-close-lightbox aria-label="Close image viewer">&times;</button>
+      <button class="lightbox-nav lightbox-prev" type="button" data-lightbox-prev aria-label="Previous image"><?= icon('arrow-left') ?></button>
+      <img id="lightbox-image" class="lightbox-image" src="" alt="">
+      <button class="lightbox-nav lightbox-next" type="button" data-lightbox-next aria-label="Next image"><?= icon('arrow-right') ?></button>
+      <figcaption class="lightbox-caption">
+        <span class="lightbox-counter" data-lightbox-counter></span>
+        <span class="lightbox-copy">
+          <strong id="lightbox-title" data-lightbox-title></strong>
+          <span data-lightbox-detail></span>
+        </span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Confirm dialog (replaces native confirm()) -->
+  <div class="modal-wrap" id="confirm-modal" aria-hidden="true" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-message">
+    <div class="modal-backdrop" data-close-confirm></div>
+    <div class="modal modal-confirm">
+      <div class="modal-head">
+        <h3 id="confirm-modal-title" style="margin:0">Please confirm</h3>
+        <button class="close-x" type="button" data-close-confirm aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-modal-message" class="confirm-message" style="margin:0"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-outline" type="button" data-close-confirm>Cancel</button>
+        <button class="btn btn-danger confirm-accept" type="button" data-confirm-accept>Confirm</button>
+      </div>
     </div>
   </div>
 

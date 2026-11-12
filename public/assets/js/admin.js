@@ -26,14 +26,8 @@
     backdrop.addEventListener('click', function () { toggleSide(false); });
   }
 
-  // Confirm destructive forms
-  document.querySelectorAll('form[data-confirm]').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      if (!window.confirm(form.getAttribute('data-confirm'))) {
-        event.preventDefault();
-      }
-    });
-  });
+  // Destructive-form confirmation is handled by the shared centred dialog
+  // in app.js ([data-confirm] on document, capture phase).
 
   // Inventory: only one of delta / set-count is active.
   document.querySelectorAll('.admin-adjust').forEach(function (form) {
@@ -56,13 +50,5 @@
     sync();
   });
 
-  // Flash auto-dismiss
-  document.querySelectorAll('[data-flash-close]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var flash = button.closest('.flash');
-      if (flash) {
-        flash.remove();
-      }
-    });
-  });
+  // Flash dismissal is handled by app.js ([data-flash-close]).
 })();
