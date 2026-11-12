@@ -134,13 +134,13 @@ SMTP is configured in **Admin → Settings → Email** or through `.env` (`MAIL_
 
 ## Shipping and tax
 
-Shipping is rule-based, not hard-coded:
+Shipping is configured entirely in **Admin → Shipping**, starting with the ship-from base location (country, state, city, ZIP). Then:
 
 - Zones match country codes and state/province lists (`*` = any state).
 - Methods can be `flat`, `weight` (`rate + ceil(weight) × per_unit`) or `free`.
 - Each method supports `min_weight`, `max_weight`, `free_over` (subtotal threshold), estimated business days and ordering.
 
-Tax rates are matched by country and exact state. `tax.shipping_taxable` decides whether shipping is part of the taxable base. If tax is enabled but no rate matches, checkout is blocked and asks the customer to call — it never silently charges 0%.
+Tax rates are matched by country and exact destination state in **Admin → Tax**. `tax.shipping_taxable` decides whether shipping is part of the taxable base. If tax is enabled but there are no active rates at all, checkout pauses and asks the customer to call. If rates exist but none match the destination, that order is not taxed.
 
 ---
 

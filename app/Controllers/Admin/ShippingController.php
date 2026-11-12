@@ -10,6 +10,7 @@ use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Settings;
 use App\Core\View;
 use App\Services\ShippingService;
 
@@ -37,7 +38,45 @@ final class ShippingController
             'editZone' => Request::int('zone', 0) > 0 ? Database::first('SELECT * FROM shipping_zones WHERE id = ?', [Request::int('zone')]) : null,
             'editMethod' => $editMethodId > 0 ? Database::first('SELECT * FROM shipping_methods WHERE id = ?', [$editMethodId]) : null,
             'configured' => $service->configured(),
+            'origin' => [
+                'country' => (string) setting('shipping.origin_country', 'US'),
+                'state' => (string) setting('shipping.origin_state', 'CA'),
+                'city' => (string) setting('shipping.origin_city', 'Simi Valley'),
+                'postcode' => (string) setting('shipping.origin_postcode', '93063'),
+            ],
         ], 'layouts/admin');
+    }
+
+    public function saveOrigin(): never
+    {
+        Csrf::require();
+        $input = Request::all();
+        $country = strtoupper(trim((string) ($input['origin_country'] ?? '')));
+        $state = strtoupper(trim((string) ($input['origin_state'] ?? '')));
+        $city = trim((string) ($input['origin_city'] ?? ''));
+        $postcode = trim((string) ($input['origin_postcode'] ?? ''));
+        $errors = [];
+        if (!preg_match('/^[A-Z]{2}$/', $country)) {
+            $errors['origin_country'] = 'Use a two-letter country code, for example US.';
+        }
+        if ($state === '') {
+            $errors['origin_state'] = 'State / province is required.';
+        }
+        if ($postcode === '') {
+            $errors['origin_postcode'] = 'ZIP / postal code is required.';
+        }
+        if ($errors !== []) {
+            Session::set('_errors', $errors);
+            remember_input($input);
+            Response::redirect(url('/admin/shipping'));
+        }
+        Settings::set('shipping.origin_country', $country, 'shipping');
+        Settings::set('shipping.origin_state', $state, 'shipping');
+        Settings::set('shipping.origin_city', $city, 'shipping');
+        Settings::set('shipping.origin_postcode', $postcode, 'shipping');
+        clear_input();
+        flash('success', 'Shipping base location saved.');
+        Response::redirect(url('/admin/shipping'));
     }
 
     public function saveZone(?string $id = null): never

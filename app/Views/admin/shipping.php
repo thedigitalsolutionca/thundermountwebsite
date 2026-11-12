@@ -15,6 +15,27 @@ $methodVal = static fn (string $key, string $default = '') => old($key, $methodE
   <div class="admin-alert"><?= icon('bell') ?><div><ul><?php foreach ($errs as $error): ?><li><?= e($error) ?></li><?php endforeach; ?></ul></div></div>
 <?php endif; ?>
 
+<div class="admin-card">
+  <div class="admin-card-head">
+    <div><h3>Base location</h3><span>Ship-from address used as the origin reference for your shipping setup.</span></div>
+    <span class="badge badge-green"><?= e($origin['city'] ?: $origin['state']) ?>, <?= e($origin['country']) ?> <?= e($origin['postcode']) ?></span>
+  </div>
+  <div class="admin-card-body">
+    <form action="<?= url('/admin/shipping/origin') ?>" method="post">
+      <?= csrf_field() ?>
+      <div class="form-row">
+        <div class="field"><label for="origin-country">Country</label><input class="input" id="origin-country" name="origin_country" value="<?= e(old('origin_country', $origin['country'])) ?>" maxlength="2" required><span class="hint">Two-letter code, for example US.</span></div>
+        <div class="field"><label for="origin-state">State / province</label><input class="input" id="origin-state" name="origin_state" value="<?= e(old('origin_state', $origin['state'])) ?>" maxlength="60" required placeholder="CA"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label for="origin-city">City</label><input class="input" id="origin-city" name="origin_city" value="<?= e(old('origin_city', $origin['city'])) ?>" maxlength="120" placeholder="Simi Valley"></div>
+        <div class="field"><label for="origin-postcode">ZIP / postal code</label><input class="input" id="origin-postcode" name="origin_postcode" value="<?= e(old('origin_postcode', $origin['postcode'])) ?>" maxlength="20" required placeholder="93063"></div>
+      </div>
+      <button class="btn btn-primary" type="submit">Save base location</button>
+    </form>
+  </div>
+</div>
+
 <div class="admin-grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start">
   <div class="stack">
     <?php if ($zones === []): ?>

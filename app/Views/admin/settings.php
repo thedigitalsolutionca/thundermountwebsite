@@ -124,7 +124,7 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
     <div class="admin-card-head"><div><h3>Transactional email</h3><span>Order confirmations, shipping notices, password resets and dealer emails.</span></div><span class="badge <?= $mailConfigured ? 'badge-green' : 'badge-amber' ?>"><?= $mailConfigured ? 'SMTP configured' : 'Using PHP mail()' ?></span></div>
     <div class="admin-card-body">
       <div class="form-row">
-        <div class="field"><label for="transport">Transport</label><select class="select" id="transport" name="settings[mail.transport]"><option value="mail"<?= selected('mail', setting('mail.transport', 'mail')) ?>>PHP mail()</option><option value="smtp"<?= selected('smtp', setting('mail.transport', 'mail')) ?>>SMTP</option></select><span class="hint">SMTP is recommended on Hostinger.</span></div>
+        <div class="field"><label for="transport">Transport</label><select class="select" id="transport" name="settings[mail.transport]"><option value="mail"<?= selected('mail', setting('mail.transport', 'mail')) ?>>PHP mail()</option><option value="smtp"<?= selected('smtp', setting('mail.transport', 'mail')) ?>>SMTP</option></select><span class="hint">SMTP is recommended on Hostinger. The test button saves these details first.</span></div>
         <div class="field"><label for="from-address">From address</label><input class="input" id="from-address" type="email" name="settings[mail.from_address]" value="<?= $get('mail.from_address') ?>"></div>
       </div>
       <div class="form-row">
@@ -138,7 +138,7 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
       <div class="field" style="max-width:420px"><label for="mail-password">SMTP password</label><input class="input" id="mail-password" type="password" name="settings[encrypted.mail_password]" value="" autocomplete="new-password" placeholder="<?= $mailConfigured ? 'Saved — leave blank to keep' : 'Enter password' ?>"></div>
       <div class="flex wrap mt-2">
         <button class="btn btn-primary" type="submit">Save email settings</button>
-        <button class="btn btn-outline" type="submit" formaction="<?= url('/admin/settings/email/test') ?>" formnovalidate>Send test email</button>
+        <button class="btn btn-outline" type="submit" formaction="<?= url('/admin/settings/email/test') ?>" formnovalidate>Save &amp; send test email</button>
       </div>
     </div>
   </form>

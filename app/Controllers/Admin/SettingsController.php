@@ -40,52 +40,72 @@ final class SettingsController
         ], 'layouts/admin');
     }
 
+    private const GROUPS = [
+        'store' => [
+            'text' => ['store.name', 'store.legal_name', 'store.tagline', 'store.phone', 'store.office_phone', 'store.email', 'store.notification_email', 'store.address', 'store.hours', 'store.currency', 'store.announcement', 'store.announcement_link'],
+            'bool' => ['store.announcement_enabled', 'store.newsletter_enabled'],
+            'email' => ['store.email', 'store.notification_email'],
+        ],
+        'seo' => [
+            'text' => ['seo.title', 'seo.description', 'seo.og_image', 'seo.organization_type'],
+            'bool' => [],
+            'email' => [],
+        ],
+        'checkout' => [
+            'text' => ['checkout.manual_payment_label', 'checkout.manual_payment_instructions', 'checkout.terms_note'],
+            'bool' => ['checkout.manual_payment_enabled'],
+            'email' => [],
+        ],
+        'paypal' => [
+            'text' => ['paypal.brand_name'],
+            'bool' => ['paypal.enabled'],
+            'email' => [],
+            'secret' => ['encrypted.paypal.client_id', 'encrypted.paypal.client_secret', 'encrypted.paypal.webhook_id'],
+            'choice' => ['paypal.mode' => ['sandbox', 'live']],
+        ],
+        'mail' => [
+            'text' => ['mail.port', 'mail.from_address'],
+            'bool' => [],
+            'email' => ['mail.from_address'],
+            'secret' => ['encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password'],
+            'choice' => ['mail.transport' => ['mail', 'smtp'], 'mail.encryption' => ['tls', 'ssl', 'none']],
+        ],
+        'preferences' => [
+            'text' => ['inventory.low_stock_threshold'],
+            'bool' => ['reviews.auto_approve', 'dealer.auto_approve'],
+            'email' => [],
+        ],
+    ];
+
     public function save(): never
     {
         Csrf::require();
         $group = (string) Request::input('group', '');
-        $groups = [
-            'store' => [
-                'text' => ['store.name', 'store.legal_name', 'store.tagline', 'store.phone', 'store.office_phone', 'store.email', 'store.notification_email', 'store.address', 'store.hours', 'store.currency', 'store.announcement', 'store.announcement_link'],
-                'bool' => ['store.announcement_enabled', 'store.newsletter_enabled'],
-                'email' => ['store.email', 'store.notification_email'],
-            ],
-            'seo' => [
-                'text' => ['seo.title', 'seo.description', 'seo.og_image', 'seo.organization_type'],
-                'bool' => [],
-                'email' => [],
-            ],
-            'checkout' => [
-                'text' => ['checkout.manual_payment_label', 'checkout.manual_payment_instructions', 'checkout.terms_note'],
-                'bool' => ['checkout.manual_payment_enabled'],
-                'email' => [],
-            ],
-            'paypal' => [
-                'text' => ['paypal.brand_name'],
-                'bool' => ['paypal.enabled'],
-                'email' => [],
-                'secret' => ['encrypted.paypal.client_id', 'encrypted.paypal.client_secret', 'encrypted.paypal.webhook_id'],
-                'choice' => ['paypal.mode' => ['sandbox', 'live']],
-            ],
-            'mail' => [
-                'text' => ['mail.port', 'mail.from_address'],
-                'bool' => [],
-                'email' => ['mail.from_address'],
-                'secret' => ['encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password'],
-                'choice' => ['mail.transport' => ['mail', 'smtp'], 'mail.encryption' => ['tls', 'ssl', 'none']],
-            ],
-            'preferences' => [
-                'text' => ['inventory.low_stock_threshold'],
-                'bool' => ['reviews.auto_approve', 'dealer.auto_approve'],
-                'email' => [],
-            ],
-        ];
-        if (!isset($groups[$group])) {
+        if (!isset(self::GROUPS[$group])) {
             flash('error', 'Unknown settings group.');
             Response::redirect(url('/admin/settings'));
         }
-        $definition = $groups[$group];
         $input = is_array($_POST['settings'] ?? null) ? $_POST['settings'] : [];
+        $errors = $this->applyGroup($group, $input);
+        if ($errors !== []) {
+            Session::set('_errors', $errors);
+            Response::redirect(url('/admin/settings?tab=' . $group));
+        }
+        flash('success', ucfirst($group) . ' settings saved.');
+        Response::redirect(url('/admin/settings?tab=' . $group));
+    }
+
+    /**
+     * Validate and persist one settings tab. Returns field errors keyed by field name.
+     *
+     * @return array<string,string>
+     */
+    private function applyGroup(string $group, array $input): array
+    {
+        $definition = self::GROUPS[$group] ?? null;
+        if ($definition === null) {
+            return ['group' => 'Unknown settings group.'];
+        }
         $errors = [];
 
         foreach ($definition['text'] as $key) {
@@ -125,21 +145,33 @@ final class SettingsController
             Settings::set('encrypted.paypal.webhook_id', '', $group);
         }
 
-        if ($errors !== []) {
-            Session::set('_errors', $errors);
-            Response::redirect(url('/admin/settings?tab=' . $group));
-        }
-        flash('success', ucfirst($group) . ' settings saved.');
-        Response::redirect(url('/admin/settings?tab=' . $group));
+        return $errors;
     }
 
     public function testEmail(): never
     {
         Csrf::require();
+        // The test button lives inside the mail form, so save what was typed first.
+        $input = is_array($_POST['settings'] ?? null) ? $_POST['settings'] : [];
+        $errors = $this->applyGroup('mail', $input);
+        if ($errors !== []) {
+            Session::set('_errors', $errors);
+            Response::redirect(url('/admin/settings?tab=mail'));
+        }
+
         $admin = Auth::user();
         $body = '<p>This is a test email from the Thunder Mounts admin.</p><p>If you received it, transactional email is configured correctly.</p>';
         $sent = Mailer::send((string) $admin['email'], 'Thunder Mounts test email', $body);
-        flash($sent ? 'success' : 'error', $sent ? 'Test email sent to ' . $admin['email'] . '.' : 'The test email could not be sent. Check the Mail settings and server logs.');
+        if ($sent) {
+            flash('success', 'Test email sent to ' . $admin['email'] . '.');
+        } else {
+            $detail = (string) Database::value("SELECT error FROM email_log ORDER BY id DESC LIMIT 1", [], '');
+            $message = 'The test email could not be sent.';
+            if ($detail !== '') {
+                $message .= ' ' . mb_substr($detail, 0, 260);
+            }
+            flash('error', $message);
+        }
         Response::redirect(url('/admin/settings?tab=mail'));
     }
 

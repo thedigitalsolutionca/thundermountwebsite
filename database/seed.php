@@ -780,6 +780,7 @@ HTML,
 
         ['shipping.origin_country', 'US', 'shipping'],
         ['shipping.origin_state', 'CA', 'shipping'],
+        ['shipping.origin_city', 'Simi Valley', 'shipping'],
         ['shipping.origin_postcode', '93063', 'shipping'],
 
         ['tax.enabled', '1', 'tax'],

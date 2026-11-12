@@ -52,7 +52,7 @@ $value = static fn (string $key, string $default = '') => old($key, $edit[$key] 
           <label class="check"><input type="checkbox" name="shipping_taxable" value="1" <?= $shippingTaxable ? 'checked' : '' ?>><span>Shipping is taxable in my state</span></label>
           <button class="btn btn-primary mt-2" type="submit">Save tax settings</button>
         </form>
-        <p class="tiny muted" style="margin:10px 0 0">If tax collection is enabled but no rate matches the destination, no tax is charged. Confirm your registration obligations with your accountant.</p>
+        <p class="tiny muted" style="margin:10px 0 0">Tax is charged by destination state/province. If collection is enabled and no active rate exists, checkout is paused until you add one; if rates exist but none match an address, that order is not taxed. Confirm your registration obligations with your accountant.</p>
       </div>
     </div>
   </div>

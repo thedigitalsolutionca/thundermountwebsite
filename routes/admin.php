@@ -83,6 +83,7 @@ return static function (Router $router): void {
     $router->get('/admin/subscribers/export', static fn () => (new MarketingController())->exportSubscribers());
 
     $router->get('/admin/shipping', static fn () => (new ShippingController())->index());
+    $router->post('/admin/shipping/origin', static fn () => (new ShippingController())->saveOrigin());
     $router->post('/admin/shipping/zones', static fn () => (new ShippingController())->saveZone());
     $router->post('/admin/shipping/zones/{id}', static fn (string $id) => (new ShippingController())->saveZone($id));
     $router->post('/admin/shipping/zones/{id}/delete', static fn (string $id) => (new ShippingController())->deleteZone($id));

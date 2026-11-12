@@ -155,12 +155,12 @@ Do these in order; later steps depend on earlier ones.
 
 1. **Settings → Store**: legal name, phone, email, address, hours, announcement.
 2. **Settings → Email**: SMTP host/port/encryption/user/password/from address. Send a test email.
-3. **Shipping**: create a zone for United States (states `*` or the ones you serve) and methods:
+3. **Shipping**: set the base (ship-from) location at the top of the page, then create a zone for United States (states `*` or the ones you serve) and methods:
    - flat rate (e.g. `$12`)
    - free over a subtotal threshold
    - weight-based if you ship by weight
    Add estimated business days. Create a second zone for Canada only if you ship there.
-4. **Tax**: add a rate per state you must collect in. Set `tax.shipping_taxable` to match your state rules. If tax is enabled and no rate matches, checkout blocks and asks the customer to call.
+4. **Tax**: add a rate per destination state you must collect in. Set `tax.shipping_taxable` to match your state rules. If tax is enabled with no active rates at all, checkout pauses and asks the customer to call.
 5. **Dealers**: create tiers (name, discount %, minimum order), set `dealer.auto_approve` off to review applications manually.
 6. **Products**: verify prices, SKUs, stock and images; set `is_active`; mark special-order items.
 7. **Discounts / Pages / Reviews / Messages**: review the seeded content and adjust legal copy.
