@@ -136,12 +136,18 @@ php install.php \
   --password="a-long-unique-password"
 ```
 
-**Without SSH:** open `https://www.thundermounts.com/install.php`, complete the form, then delete the file.
+**Without SSH:** temporarily enable the web installer by adding this line to `public/.htaccess`:
+
+```apache
+SetEnv ALLOW_INSTALL 1
+```
+
+Open `https://www.thundermounts.com/install.php`, complete the form, then **remove that line** and delete `public/install.php`. The web installer is disabled otherwise.
 
 After it finishes:
 
 1. Confirm `storage/installed.lock` exists.
-2. **Delete `install.php`** (or at least confirm it refuses to run: it checks for an existing admin).
+2. **Delete `install.php` and `public/install.php`** (or at least confirm the installer refuses to run: it checks for an existing admin).
 3. Sign in at `https://www.thundermounts.com/admin/login`.
 4. Change the seeded admin password if it was shared in chat or email.
 

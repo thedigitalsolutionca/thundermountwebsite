@@ -58,7 +58,13 @@ Install the schema and seed data:
 php install.php --name="Store Owner" --email=owner@example.com --password="choose-a-long-password"
 ```
 
-Or open `http://localhost:8080/install.php` and use the form.
+Or start the server with the one-time web installer enabled:
+
+```bash
+ALLOW_INSTALL=1 php -S 0.0.0.0:8080 -t public
+```
+
+Then open `http://localhost:8080/install.php`. Remove the variable afterwards; the web installer is disabled by default.
 
 Serve the site from `public/`:
 
@@ -77,15 +83,18 @@ The installer creates 6 categories, 19 products, product images, 9 content pages
 
 ## Production deployment
 
-See **[DEPLOYMENT.md](DEPLOYMENT.md)** for the Hostinger walkthrough, `public/` document-root setup, MySQL, `.env`, permissions, PayPal webhooks, SMTP, cron and the go-live checklist.
+See:
+
+- **[DEPLOY-GITHUB.md](DEPLOY-GITHUB.md)** — deploy from GitHub with the included Dockerfile (Railway/Render/Docker host).
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** — Hostinger/Apache walkthrough, `public/` document root, MySQL, `.env`, permissions, PayPal webhooks, SMTP, cron and the go-live checklist.
 
 Short version:
 
 1. Upload the project outside `public_html`, or point the domain document root at `public/`.
 2. Create a MySQL database and copy the credentials into `.env`.
 3. Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://www.thundermounts.com`, and a strong `APP_KEY`.
-4. Run `php install.php ...` once, then **delete `install.php`**.
-5. In **Admin → Shipping** add real zones and rates; in **Admin → Tax** add real rates.
+4. Run `php install.php ...` once, then **delete `install.php`** (and `public/install.php`).
+5. In **Admin → Shipping** set the base location, zones and rates; in **Admin → Tax** add real rates.
 6. In **Admin → Settings** add PayPal and SMTP credentials.
 7. Configure the PayPal webhook (see below).
 
@@ -172,12 +181,17 @@ routes/
   admin.php              admin route table
 public/
   index.php              front controller
+  install.php            optional web installer (disabled unless ALLOW_INSTALL=1)
   .htaccess              rewrites, HTTPS, caching
   assets/css/app.css     storefront + admin styles
   assets/js/app.js       storefront interactions
   assets/js/admin.js     admin interactions
   uploads/               product/dealer uploads (writeable; never executable)
-install.php              one-time installer
+install.php              one-time CLI installer
+Dockerfile               PHP 8.3 + Apache image for GitHub-connected hosts
+docker/                  Apache config + port/permission entrypoint
+railway.json             Railway Docker build settings
+DEPLOY-GITHUB.md         Railway/Render/Docker deployment guide
 bin/
   retry-mail.php         cron: retry recently failed transactional email
   maintenance.php        cron: prune carts, sessions, webhook payloads, old email bodies
