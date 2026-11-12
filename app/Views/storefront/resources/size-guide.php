@@ -20,8 +20,8 @@
       <div class="flex wrap mt-3"><a class="btn btn-primary" href="<?= url('/shop') ?>">Shop the mounts</a><a class="btn btn-outline" href="<?= url('/contact?subject=' . urlencode('Fitment question')) ?>">Ask for help</a></div>
     </div>
     <figure class="size-chart">
-      <img src="<?= asset('img/tm-installation-chart.jpg') ?>" alt="Thunder Mounts illustration comparing track and opener mount lengths above a seven-foot garage door" width="900" height="880" loading="lazy">
-      <figcaption>Illustrative chart for a seven-foot door. The track-model labels shown are from an earlier chart; use the current TMGT product listings for model names and confirm fitment before ordering.</figcaption>
+      <img src="<?= asset('img/tm-installation-chart-2026.jpg') ?>" alt="Thunder Mounts illustration comparing track and opener mount lengths above a seven-foot garage door" width="600" height="573" loading="lazy">
+      <figcaption>Supplied Thunder Mounts installation chart dated May 25, 2026. The chart uses TMGTS / TMGTX / TMGTL track labels; compare with current TMGT product listings and confirm fitment before ordering.</figcaption>
     </figure>
   </div>
 </section>

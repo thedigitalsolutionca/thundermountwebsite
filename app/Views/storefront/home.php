@@ -6,12 +6,12 @@
 <section class="hero">
   <div class="container inner">
     <div class="hero-copy">
-      <span class="eyebrow">Invented in 1991. Made in California.</span>
-      <h1>The new installation standard for <span>garage doors</span> and openers.</h1>
-      <p class="lead">Thunder Mounts replaces outdated angle iron with engineered mounting systems that deliver Value, Symmetry and Safety — purpose-built for the loads a garage really carries.</p>
+      <span class="eyebrow">A better standard for garage installation.</span>
+      <h1>A cleaner garage.<br>A <span>better standard.</span></h1>
+      <p class="lead">Purpose-built mounts for overhead garage doors and openers. Replace improvised angle iron with clean lines, finished components, and an installation that looks intentional.</p>
       <div class="cta-row">
         <a class="btn btn-primary btn-lg" href="<?= url('/shop') ?>">Shop Products <?= icon('arrow-right') ?></a>
-        <a class="btn btn-outline-light btn-lg" href="<?= url('/dealer-program') ?>">Become a Dealer</a>
+        <a class="btn btn-outline-light btn-lg" href="<?= url('/size-guide') ?>">Find Your Fit</a>
       </div>
       <div class="hero-stats">
         <div><strong>4 lengths</strong><span>12 · 19 · 24 · 29 in.</span></div>
@@ -20,13 +20,13 @@
       </div>
     </div>
     <div class="hero-media">
-      <img src="<?= asset('img/chi-door-malibu.jpg') ?>" alt="Installers working on a garage door and track installation in Malibu" width="1200" height="900" fetchpriority="high">
+      <img src="<?= asset('img/hero-dual-sets.jpg') ?>" alt="Finished garage with two Thunder Mounts installations" width="1200" height="900" fetchpriority="high">
       <span class="photo-cap">Actual Thunder Mounts installation</span>
       <div class="hero-proof">
         <span class="bolt"><?= icon('zap') ?></span>
         <div>
           <strong>Installed, not rendered.</strong>
-          <span>Actual installation · Malibu, California</span>
+          <span>Real garage · Thunder Mounts installation</span>
         </div>
       </div>
     </div>
@@ -153,7 +153,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section home-feature home-compatibility">
   <div class="container">
     <div class="split">
       <div>
@@ -174,6 +174,18 @@
       <div>
         <img src="<?= asset('img/tm-track-glass.jpg') ?>" alt="Thunder Mounts supporting the track of a glass garage door" loading="lazy" width="1200" height="800">
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-gray home-feature home-powder">
+  <div class="container split">
+    <img src="<?= asset('img/tm-install-white.jpg') ?>" alt="White Thunder Mounts coordinated with the garage interior" loading="lazy" width="1000" height="750">
+    <div>
+      <span class="eyebrow">Powder coating services</span>
+      <h2>One garage. One considered finish.</h2>
+      <p class="muted">Coordinate your mounts, door tracks, and hardware. Talk to our team about colors and powder coating options for your project.</p>
+      <a class="btn btn-primary" href="<?= url('/powder-coating') ?>">Explore Powder Coating <?= icon('arrow-right') ?></a>
     </div>
   </div>
 </section>

@@ -21,11 +21,18 @@ use DateTimeZone;
  */
 final class ResourceController
 {
+    public function servicePage(string $slug): string
+    {
+        $pages = require TM_ROOT . '/app/Content/Services.php';
+        $page = $pages[$slug];
+        return $this->render('service', $page['title'], $page['intro'], '/' . $slug, ['servicePage' => $page]);
+    }
+
     public function story(): string
     {
         return $this->render('story', 'The Story of Thunder Mounts',
             'Meet Gustavo Estravit and learn how a better garage installation began with a home project in 1991.',
-            '/about/inventor');
+            '/about/inventor', ['ogImage' => '/assets/img/gustavo-estravit-owner.jpg']);
     }
 
     public function portfolio(): string
@@ -45,7 +52,7 @@ final class ResourceController
     public function instructions(): string
     {
         return $this->render('instructions', 'Mounting Instructions',
-            'Prepare for a Thunder Mounts installation and request instructions for your exact model.',
+            'Download the original Thunder Mounts track mounting instructions and view the May 2026 installation chart.',
             '/resources/instructions');
     }
 

@@ -1,6 +1,6 @@
 <section class="resource-intro">
   <div class="container">
-    <?= \App\Core\View::partial('storefront/partials/breadcrumbs', ['crumbs' => [['label' => 'About', 'url' => '/page/about'], ['label' => 'Our story']]]) ?>
+    <?= \App\Core\View::partial('storefront/partials/breadcrumbs', ['crumbs' => [['label' => 'About', 'url' => '/page/about'], ['label' => 'Inventor Bio']]]) ?>
     <div class="resource-split">
       <div>
         <span class="eyebrow">The inventor · Gustavo Estravit</span>
@@ -11,9 +11,9 @@
           <a class="btn btn-outline-light" href="<?= url('/page/about') ?>">About the company</a>
         </div>
       </div>
-      <figure class="resource-intro-photo">
-        <img src="<?= asset('img/chi-door-malibu.jpg') ?>" alt="Installers working in a Malibu garage" width="920" height="610" fetchpriority="high">
-        <figcaption>Real installation work in Malibu, California.</figcaption>
+      <figure class="resource-intro-photo inventor-portrait">
+        <img src="<?= asset('img/gustavo-estravit-owner.jpg') ?>" alt="Gustavo Estravit, owner and inventor of Thunder Mounts, standing beside a sports car" width="523" height="472" fetchpriority="high">
+        <figcaption>Gustavo Estravit · Owner &amp; inventor of Thunder Mounts.</figcaption>
       </figure>
     </div>
   </div>

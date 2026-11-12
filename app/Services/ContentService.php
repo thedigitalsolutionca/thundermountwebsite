@@ -85,7 +85,7 @@ final class ContentService
         $existing = Database::first('SELECT * FROM newsletter_subscribers WHERE email = ?', [$email]);
         if ($existing) {
             if ($existing['status'] === 'subscribed') {
-                return ['ok' => true, 'message' => 'You are already on the list.'];
+                return ['ok' => true, 'message' => 'Your subscription is already active. You will continue to receive Thunder Mounts product news and installer resources.'];
             }
             Database::execute('UPDATE newsletter_subscribers SET status = ? WHERE id = ?', ['subscribed', $existing['id']]);
         } else {
@@ -95,7 +95,7 @@ final class ContentService
                 'created_at' => now(),
             ]);
         }
-        return ['ok' => true, 'message' => 'Thanks — you are on the list.'];
+        return ['ok' => true, 'message' => 'Your subscription is confirmed. Watch your inbox for Thunder Mounts product news and installer resources.'];
     }
 
     public function joinWaitlist(int $productId, string $email): array
