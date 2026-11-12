@@ -114,8 +114,8 @@
     <div class="section-head">
       <div>
         <span class="eyebrow">Why Thunder Mounts</span>
-        <h2 style="color:#fff">Engineered for strength, clean aesthetics and reliable results</h2>
-        <p style="color:#C9CED4">A mounting system designed for the way garages are actually built and used.</p>
+        <h2>Engineered for strength, clean aesthetics and reliable results</h2>
+        <p class="muted">A mounting system designed for the way garages are actually built and used.</p>
       </div>
     </div>
     <div class="grid grid-3">

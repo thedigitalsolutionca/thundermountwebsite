@@ -66,7 +66,7 @@ if ((int) $stats['total'] > 0) {
     <div class="pdp">
       <div class="gallery">
         <div class="main">
-          <img id="pdp-main" src="<?= e(upload_url($images[0]['path'])) ?>" alt="<?= e($images[0]['alt'] ?? $product['name']) ?>" width="900" height="900">
+          <img id="pdp-main" src="<?= e(upload_url($images[0]['path'])) ?>" alt="<?= e($images[0]['alt'] ?? $product['name']) ?>" width="900" height="900" data-lightbox="pdp" data-lightbox-title="<?= e($product['name']) ?>" data-lightbox-detail="Model <?= e($product['model']) ?> · SKU <?= e($product['sku']) ?>" role="button" tabindex="0" aria-label="View larger image of <?= e($product['name']) ?>">
         </div>
         <?php if (count($images) > 1): ?>
           <div class="thumbs" role="group" aria-label="Product images">

@@ -46,6 +46,12 @@
     });
   }
 
+  var toastIcons = {
+    success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>',
+    error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  };
+
   function toast(message, type) {
     var wrap = $('[data-toast-wrap]');
     if (!wrap) {
@@ -55,7 +61,7 @@
     var kind = ['success', 'error', 'info'].indexOf(type) >= 0 ? type : 'info';
     node.className = 'toast flash flash-' + kind;
     node.setAttribute('role', kind === 'error' ? 'alert' : 'status');
-    node.innerHTML = '<div class="flash-copy"><strong>' + (kind === 'error' ? 'Please check' : kind === 'success' ? 'Success' : 'Notice') + '</strong><span>' + escapeHtml(message) + '</span></div><button class="flash-close" type="button" aria-label="Dismiss">&times;</button>';
+    node.innerHTML = (toastIcons[kind] || toastIcons.info) + '<div class="flash-copy"><strong>' + (kind === 'error' ? 'Please check' : kind === 'success' ? 'Success' : 'Notice') + '</strong><span>' + escapeHtml(message) + '</span></div><button class="flash-close" type="button" aria-label="Dismiss">&times;</button>';
     node.querySelector('button').addEventListener('click', function () {
       node.remove();
     });
@@ -101,11 +107,16 @@
   // ---------------------------------------------------------------------
   // Overlays share one scroll lock so closing a dialog never unlocks an open cart.
   // ---------------------------------------------------------------------
+  var lightbox = $('#lightbox');
+  var confirmModal = $('#confirm-modal');
+
   function syncScrollLock() {
     document.body.classList.toggle('no-scroll',
       (drawer && drawer.classList.contains('open')) ||
       (searchModal && searchModal.classList.contains('open')) ||
       (quickModal && quickModal.classList.contains('open')) ||
+      (lightbox && lightbox.classList.contains('open')) ||
+      (confirmModal && confirmModal.classList.contains('open')) ||
       (mobileNav && mobileNav.classList.contains('open')));
   }
 
@@ -346,7 +357,7 @@
         first.focus();
       }
     }
-    if ((event.key === '/' || (event.key === 'k' && (event.metaKey || event.ctrlKey))) && !/input|textarea|select/i.test(document.activeElement.tagName)) {
+    if ((event.key === '/' || (event.key === 'k' && (event.metaKey || event.ctrlKey))) && !/input|textarea|select/i.test(document.activeElement.tagName) && !(lightbox && lightbox.classList.contains('open')) && !(confirmModal && confirmModal.classList.contains('open'))) {
       event.preventDefault();
       openSearch();
     }
@@ -512,8 +523,266 @@
     }
   });
 
+  // ---------------------------------------------------------------------
+  // Image lightbox — click-to-zoom for portfolio photos and the product gallery.
+  // Any element with [data-lightbox="group"] opens the shared dialog; siblings
+  // with the same group value navigate with arrows or ← / → keys.
+  // ---------------------------------------------------------------------
+  var lightboxImage = lightbox ? lightbox.querySelector('#lightbox-image') : null;
+  var lightboxFigure = lightbox ? lightbox.querySelector('.lightbox') : null;
+  var lightboxCounter = lightbox ? lightbox.querySelector('[data-lightbox-counter]') : null;
+  var lightboxTitle = lightbox ? lightbox.querySelector('[data-lightbox-title]') : null;
+  var lightboxDetail = lightbox ? lightbox.querySelector('[data-lightbox-detail]') : null;
+  var lightboxItems = [];
+  var lightboxIndex = 0;
+  var lightboxReturnFocus = null;
+
+  function lightboxItemsFor(group) {
+    return $$('[data-lightbox]').filter(function (node) {
+      return (node.getAttribute('data-lightbox') || '') === group;
+    });
+  }
+
+  function lightboxSource(node) {
+    if (node.tagName === 'A') {
+      return node.getAttribute('href') || '';
+    }
+    var img = node.tagName === 'IMG' ? node : node.querySelector('img');
+    return img ? (img.currentSrc || img.src) : '';
+  }
+
+  function lightboxImageFor(node) {
+    return node.tagName === 'IMG' ? node : node.querySelector('img');
+  }
+
+  function renderLightbox() {
+    var node = lightboxItems[lightboxIndex];
+    if (!node || !lightboxImage) {
+      return;
+    }
+    var img = lightboxImageFor(node);
+    var title = node.getAttribute('data-lightbox-title') || (img ? img.alt : '') || 'Photo';
+    var detail = node.getAttribute('data-lightbox-detail') || '';
+    lightboxImage.src = lightboxSource(node);
+    lightboxImage.alt = img ? (img.alt || title) : title;
+    if (lightboxTitle) {
+      lightboxTitle.textContent = title;
+    }
+    if (lightboxDetail) {
+      lightboxDetail.textContent = detail;
+      lightboxDetail.hidden = detail === '';
+    }
+    if (lightboxCounter) {
+      lightboxCounter.textContent = (lightboxIndex + 1) + ' / ' + lightboxItems.length;
+    }
+    if (lightboxFigure) {
+      lightboxFigure.classList.toggle('single', lightboxItems.length < 2);
+    }
+  }
+
+  function openLightbox(node) {
+    if (!lightbox || !lightboxImage || !node) {
+      return;
+    }
+    var group = node.getAttribute('data-lightbox') || 'default';
+    var items = lightboxItemsFor(group);
+    var index = items.indexOf(node);
+    lightboxItems = items.length ? items : [node];
+    lightboxIndex = index >= 0 ? index : 0;
+    lightboxReturnFocus = node;
+    renderLightbox();
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    syncScrollLock();
+    var close = lightbox.querySelector('.lightbox-close');
+    if (close) {
+      close.focus();
+    }
+  }
+
+  function closeLightbox(returnFocus) {
+    if (!lightbox || !lightbox.classList.contains('open')) {
+      return;
+    }
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    syncScrollLock();
+    if (returnFocus !== false && lightboxReturnFocus && lightboxReturnFocus.isConnected) {
+      lightboxReturnFocus.focus();
+    }
+  }
+
+  function stepLightbox(delta) {
+    if (lightboxItems.length < 2) {
+      return;
+    }
+    lightboxIndex = (lightboxIndex + delta + lightboxItems.length) % lightboxItems.length;
+    renderLightbox();
+  }
+
+  // ---------------------------------------------------------------------
+  // Confirm dialog — styled replacement for window.confirm() on [data-confirm] forms.
+  // ---------------------------------------------------------------------
+  var confirmMessage = confirmModal ? confirmModal.querySelector('#confirm-modal-message') : null;
+  var confirmAccept = confirmModal ? confirmModal.querySelector('[data-confirm-accept]') : null;
+  var pendingConfirm = null;
+
+  function openConfirm(message, form, submitter) {
+    if (!confirmModal || !confirmMessage) {
+      if (form) {
+        form.dataset.confirmed = '1';
+        form.submit();
+      }
+      return;
+    }
+    pendingConfirm = { form: form, submitter: submitter || null };
+    confirmMessage.textContent = message || 'Are you sure you want to continue?';
+    confirmModal.classList.add('open');
+    confirmModal.setAttribute('aria-hidden', 'false');
+    syncScrollLock();
+    var cancel = confirmModal.querySelector('.modal-foot [data-close-confirm]');
+    if (cancel) {
+      cancel.focus();
+    }
+  }
+
+  function closeConfirm() {
+    if (!confirmModal || !confirmModal.classList.contains('open')) {
+      return;
+    }
+    confirmModal.classList.remove('open');
+    confirmModal.setAttribute('aria-hidden', 'true');
+    pendingConfirm = null;
+    syncScrollLock();
+  }
+
+  document.addEventListener('click', function (event) {
+    var trigger = event.target.closest ? event.target.closest('[data-lightbox]') : null;
+    if (trigger) {
+      event.preventDefault();
+      openLightbox(trigger);
+      return;
+    }
+    if (event.target.closest && event.target.closest('[data-close-lightbox]')) {
+      event.preventDefault();
+      closeLightbox();
+      return;
+    }
+    if (event.target.closest && event.target.closest('[data-lightbox-prev]')) {
+      event.preventDefault();
+      stepLightbox(-1);
+      return;
+    }
+    if (event.target.closest && event.target.closest('[data-lightbox-next]')) {
+      event.preventDefault();
+      stepLightbox(1);
+    }
+  });
+
+  document.addEventListener('click', function (event) {
+    if (confirmModal && event.target.closest && event.target.closest('[data-close-confirm]')) {
+      event.preventDefault();
+      closeConfirm();
+    }
+  });
+
+  if (confirmAccept) {
+    confirmAccept.addEventListener('click', function () {
+      var pending = pendingConfirm;
+      closeConfirm();
+      if (!pending || !pending.form) {
+        return;
+      }
+      var form = pending.form;
+      form.dataset.confirmed = '1';
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit(pending.submitter || undefined);
+      } else {
+        form.submit();
+      }
+    });
+  }
+
+  // Capture data-confirm submissions before they hit the network.
+  document.addEventListener('submit', function (event) {
+    var form = event.target;
+    if (!form || !form.matches || !form.matches('form[data-confirm]')) {
+      return;
+    }
+    if (form.dataset.confirmed === '1') {
+      form.dataset.confirmed = '';
+      return; // Already approved via the dialog.
+    }
+    event.preventDefault();
+    if (typeof event.stopImmediatePropagation === 'function') {
+      event.stopImmediatePropagation();
+    }
+    openConfirm(form.getAttribute('data-confirm'), form, event.submitter);
+  }, true);
+
+  document.addEventListener('keydown', function (event) {
+    var trigger = event.target && event.target.closest ? event.target.closest('[data-lightbox]') : null;
+    if (trigger && (event.key === 'Enter' || event.key === ' ') && !/^(A|BUTTON)$/.test(trigger.tagName)) {
+      event.preventDefault();
+      openLightbox(trigger);
+      return;
+    }
+    if (lightbox && lightbox.classList.contains('open')) {
+      if (event.key === 'Escape') {
+        closeLightbox();
+        return;
+      }
+      if (event.key === 'ArrowLeft') {
+        stepLightbox(-1);
+        return;
+      }
+      if (event.key === 'ArrowRight') {
+        stepLightbox(1);
+        return;
+      }
+      if (event.key === 'Tab') {
+        var focusable = $$('button, a[href], [tabindex]:not([tabindex="-1"])', lightbox);
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (!first) {
+          return;
+        }
+        if (event.shiftKey && (document.activeElement === first || !lightbox.contains(document.activeElement))) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !lightbox.contains(document.activeElement))) {
+          event.preventDefault();
+          first.focus();
+        }
+        return;
+      }
+    }
+    if (confirmModal && confirmModal.classList.contains('open')) {
+      if (event.key === 'Escape') {
+        closeConfirm();
+        return;
+      }
+      if (event.key === 'Tab') {
+        var confirmFocusable = $$('button, a[href]', confirmModal);
+        var cfFirst = confirmFocusable[0];
+        var cfLast = confirmFocusable[confirmFocusable.length - 1];
+        if (!cfFirst) {
+          return;
+        }
+        if (event.shiftKey && (document.activeElement === cfFirst || !confirmModal.contains(document.activeElement))) {
+          event.preventDefault();
+          cfLast.focus();
+        } else if (!event.shiftKey && (document.activeElement === cfLast || !confirmModal.contains(document.activeElement))) {
+          event.preventDefault();
+          cfFirst.focus();
+        }
+      }
+    }
+  });
+
   // Expose a tiny public API for page-specific scripts (checkout errors, etc).
   TM.toast = toast;
+  TM.lightbox = { open: openLightbox, close: closeLightbox };
   window.TM = TM;
 
   var announce = $('#announce-bar');
@@ -531,14 +800,6 @@
       });
     }
   }
-
-  $$('[data-confirm]').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      if (!window.confirm(form.getAttribute('data-confirm'))) {
-        event.preventDefault();
-      }
-    });
-  });
 
   $$('[data-print]').forEach(function (button) {
     button.addEventListener('click', function () {

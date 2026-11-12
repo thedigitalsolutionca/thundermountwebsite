@@ -13,9 +13,8 @@ $errs = errors();
 <body class="admin-login-body">
   <main class="admin-login">
     <div class="admin-login-card">
-      <a class="brand tm-brand" href="<?= url('/') ?>" style="margin-bottom:22px">
-        <span class="tm-bolt" aria-hidden="true"><svg viewBox="0 0 40 48" fill="none"><path d="M24 2L4 28h12l-2 18 20-26H22l2-18z" fill="#C82026"/></svg></span>
-        <span class="tm-wordmark">THUNDER<span>MOUNTS<small>Garage Systems</small></span></span>
+      <a class="brand tm-brand" href="<?= url('/') ?>" style="margin-bottom:22px" aria-label="Thunder Mounts home">
+        <img class="brand-logo" src="<?= asset('img/thundermounts-logo.jpg') ?>" alt="Thunder Mounts — Garage Systems" width="705" height="173">
       </a>
       <span class="eyebrow">Store administration</span>
       <h1 style="font-size:1.7rem;margin:4px 0 6px">Sign in to manage the store</h1>
