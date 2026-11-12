@@ -793,9 +793,9 @@ HTML,
         ['encrypted.paypal.webhook_id', '', 'paypal'],
         ['paypal.brand_name', 'Thunder Mounts', 'paypal'],
 
-        ['checkout.manual_payment_enabled', '0', 'checkout'],
+        ['checkout.manual_payment_enabled', '1', 'checkout'],
         ['checkout.manual_payment_label', 'Pay by invoice', 'checkout'],
-        ['checkout.manual_payment_instructions', '', 'checkout'],
+        ['checkout.manual_payment_instructions', 'No payment is taken online. We will review your order and email you with payment instructions. We release orders once payment is confirmed.', 'checkout'],
         ['checkout.terms_note', 'By placing your order you agree to our Terms of Service.', 'checkout'],
 
         ['mail.transport', 'mail', 'mail'],

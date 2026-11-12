@@ -20,4 +20,3 @@
     </div>
   </div>
 </div>
-<?php clear_input(); ?>

@@ -6,9 +6,9 @@
 <section class="hero">
   <div class="container inner">
     <div class="hero-copy">
-      <span class="eyebrow" style="color:#FF8A8F">Built for today. Ready for tomorrow.</span>
+      <span class="eyebrow">Invented in 1991. Made in California.</span>
       <h1>The new installation standard for <span>garage doors</span> and openers.</h1>
-      <p class="lead">Thunder Mounts replaces outdated angle iron with engineered mounting systems that deliver Value, Symmetry and Safety. Purpose-built in America for the loads a garage really carries.</p>
+      <p class="lead">Thunder Mounts replaces outdated angle iron with engineered mounting systems that deliver Value, Symmetry and Safety — purpose-built for the loads a garage really carries.</p>
       <div class="cta-row">
         <a class="btn btn-primary btn-lg" href="<?= url('/shop') ?>">Shop Products <?= icon('arrow-right') ?></a>
         <a class="btn btn-outline-light btn-lg" href="<?= url('/dealer-program') ?>">Become a Dealer</a>
@@ -20,8 +20,15 @@
       </div>
     </div>
     <div class="hero-media">
-      <img src="<?= asset('img/hero-garage.jpg') ?>" alt="Two Thunder Mounts sets installed in a white garage" width="1200" height="900" fetchpriority="high">
+      <img src="<?= asset('img/chi-door-malibu.jpg') ?>" alt="Installers working on a garage door and track installation in Malibu" width="1200" height="900" fetchpriority="high">
       <span class="photo-cap">Actual Thunder Mounts installation</span>
+      <div class="hero-proof">
+        <span class="bolt"><?= icon('zap') ?></span>
+        <div>
+          <strong>Installed, not rendered.</strong>
+          <span>Actual installation · Malibu, California</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -95,6 +102,10 @@
         <figcaption>After — Thunder Mounts</figcaption>
       </figure>
     </div>
+    <div class="portfolio-link">
+      <span>Real work. Real garages.</span>
+      <a class="btn btn-outline" href="<?= url('/portfolio') ?>">Explore the portfolio <?= icon('arrow-right') ?></a>
+    </div>
   </div>
 </section>
 
@@ -156,7 +167,7 @@
           <li>Contact us to confirm fitment for your exact opener model</li>
         </ul>
         <div class="flex wrap">
-          <a class="btn btn-dark" href="<?= url('/page/installation') ?>">Installation &amp; sizing <?= icon('arrow-right') ?></a>
+          <a class="btn btn-dark" href="<?= url('/size-guide') ?>">Installation &amp; sizing <?= icon('arrow-right') ?></a>
           <a class="btn btn-outline" href="<?= url('/contact?subject=' . urlencode('Fitment question')) ?>">Ask about fitment</a>
         </div>
       </div>
@@ -193,7 +204,7 @@
 <section class="section">
   <div class="container">
     <div class="grid grid-2" style="align-items:stretch">
-      <div class="card card-body" style="padding:40px;background:var(--gray-50)">
+      <div class="card card-body home-next-card" style="background:var(--gray-50)">
         <span class="eyebrow">Dealer program</span>
         <h2 style="margin-bottom:8px">Buy for the whole crew.</h2>
         <p class="muted">Installers and distributors can apply for a dealer account. Approved dealers sign in to see trade pricing, place orders and track them in one place.</p>
@@ -202,13 +213,13 @@
           <a class="btn btn-outline" href="<?= url('/dealer/login') ?>">Dealer login</a>
         </div>
       </div>
-      <div class="card card-body" style="padding:40px">
+      <div class="card card-body home-next-card">
         <span class="eyebrow">Need help choosing?</span>
         <h2 style="margin-bottom:8px">Measure once, order right.</h2>
         <p class="muted">Measure from the ceiling to the opener attachment bolts, or from the ceiling to the door track bolt holes. If you are between sizes, call us and we will help.</p>
         <div class="flex wrap" style="margin-top:auto">
           <a class="btn btn-dark" href="tel:<?= e(preg_replace('/\D+/', '', setting('store.phone', '805-338-6680'))) ?>"><?= icon('phone') ?> <?= e(setting('store.phone', '805-338-6680')) ?></a>
-          <a class="btn btn-outline" href="<?= url('/page/installation') ?>">Sizing guide</a>
+          <a class="btn btn-outline" href="<?= url('/size-guide') ?>">Sizing guide</a>
         </div>
       </div>
     </div>

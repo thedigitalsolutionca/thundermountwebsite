@@ -12,7 +12,7 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
       <div>
         <span class="eyebrow">Secure checkout</span>
         <h1 style="margin-bottom:4px">Checkout</h1>
-        <p class="muted" style="margin:0"><?= icon('lock') ?> Encrypted connection · PayPal handles your payment details</p>
+        <p class="muted" style="margin:0"><?= icon('lock') ?> Secure connection · <?= $readiness['paypal'] ? 'PayPal handles online payments' : 'No payment is collected online' ?></p>
       </div>
       <div class="checkout-steps small muted"><span class="done">Cart</span><span class="active">Details &amp; payment</span><span>Confirmation</span></div>
     </div>
@@ -32,7 +32,7 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
       </div>
     <?php endif; ?>
 
-    <form action="<?= url('/checkout') ?>" method="post" id="checkout-form" novalidate>
+    <form action="<?= url('/checkout') ?>" method="post" id="checkout-form">
       <?= csrf_field() ?>
       <div class="checkout">
         <div>
@@ -216,7 +216,7 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
                 <div class="pay-block" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
                   <h3 style="font-size:1rem;margin:0 0 4px">Other ways to pay</h3>
                   <p class="small muted"><?= e(Settings::get('checkout.manual_payment_instructions', 'Place your order and we will email payment instructions.')) ?></p>
-                  <button type="submit" class="btn btn-outline" formaction="<?= url('/checkout/manual') ?>" formnovalidate data-manual-order>Place order — pay by invoice</button>
+                  <button type="submit" class="btn btn-outline" formaction="<?= url('/checkout/manual') ?>" data-manual-order>Place order — <?= e(Settings::get('checkout.manual_payment_label', 'Pay by invoice')) ?></button>
                 </div>
               <?php endif; ?>
 
@@ -279,8 +279,8 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
           </div>
 
           <div class="card card-body mt-2 small">
-            <strong><?= icon('lock') ?> Secure payment</strong>
-            <p class="muted" style="margin:4px 0 0">Payment is processed by PayPal. We never see or store your card number. Need help? Call <a href="tel:8053386680" class="bold">805-338-6680</a> or email <a href="mailto:thunder@thundermounts.com" class="bold">thunder@thundermounts.com</a>.</p>
+            <strong><?= icon('lock') ?> <?= $readiness['paypal'] ? 'Secure payment' : 'Order review' ?></strong>
+            <p class="muted" style="margin:4px 0 0"><?= $readiness['paypal'] ? 'Payment is processed by PayPal. We never see or store your card number.' : 'No online payment is taken. We will email you about the invoice and next steps.' ?> Need help? Call <a href="tel:8053386680" class="bold">805-338-6680</a> or email <a href="mailto:thunder@thundermounts.com" class="bold">thunder@thundermounts.com</a>.</p>
           </div>
 
           <div class="card card-body mt-2 small muted">

@@ -36,7 +36,7 @@ $errs = errors();
                   <?php if (isset($errs['email'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['email']) ?></span><?php endif; ?>
                 </div>
                 <div class="form-row">
-                  <div class="field"><label for="prof-phone">Phone</label><input class="input" id="prof-phone" name="phone" type="tel" value="<?= e(old('phone', $user['phone'])) ?>"></div>
+                  <div class="field"><label for="prof-phone">Phone</label><input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="prof-phone" name="phone" type="tel" value="<?= e(old('phone', $user['phone'])) ?>" required autocomplete="tel"><?php if (isset($errs['phone'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['phone']) ?></span><?php endif; ?></div>
                   <div class="field"><label for="prof-company">Company</label><input class="input" id="prof-company" name="company" value="<?= e(old('company', $user['company'])) ?>"></div>
                 </div>
                 <button class="btn btn-primary" type="submit">Save details</button>
@@ -68,4 +68,3 @@ $errs = errors();
     </div>
   </div>
 </div>
-<?php clear_input(); ?>

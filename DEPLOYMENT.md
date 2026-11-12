@@ -166,11 +166,11 @@ Do these in order; later steps depend on earlier ones.
    - free over a subtotal threshold
    - weight-based if you ship by weight
    Add estimated business days. Create a second zone for Canada only if you ship there.
-4. **Tax**: add a rate per destination state you must collect in. Set `tax.shipping_taxable` to match your state rules. If tax is enabled with no active rates at all, checkout pauses and asks the customer to call.
+4. **Tax**: add a rate per destination state you must collect in. Set `tax.shipping_taxable` to match your state rules. If tax is enabled with no active rates at all, checkout will not place an order. If invoice enquiries are enabled, customers can send their cart and delivery details for a manually confirmed price; otherwise they can call.
 5. **Dealers**: create tiers (name, discount %, minimum order), set `dealer.auto_approve` off to review applications manually.
 6. **Products**: verify prices, SKUs, stock and images; set `is_active`; mark special-order items.
 7. **Discounts / Pages / Reviews / Messages**: review the seeded content and adjust legal copy.
-8. **Settings → Checkout**: leave manual/invoice payments **off** unless you intend to take orders without PayPal.
+8. **Settings → Checkout**: new installs seed pay by invoice **on** with basic instructions; existing installations keep their current setting. Decide whether to offer unpaid invoice orders. Enable/review the instructions in Admin if the merchant wants it, or disable it if not. Without configured shipping/tax rules, enabled invoice checkout accepts an **enquiry only** (no order, stock reservation, payment, or final total); review these messages in Admin → Messages and confirm charges manually.
 
 ---
 
@@ -278,7 +278,7 @@ Both scripts exit non-zero on failure, so cron email alerts work. PayPal also re
 | 404 on every page except `/` | `mod_rewrite` off or document root wrong | Enable rewrite; point document root at `public/` |
 | Redirect loop | HTTPS forced both at proxy and `.htaccess` | Keep one redirect; the bundled rule respects `X-Forwarded-Proto` |
 | CSS/JS missing | Document root is project root, not `public/` | Fix document root or move assets |
-| Checkout says “contact us” | No shipping method or tax rate matches | Configure Shipping/Tax in admin |
+| Checkout offers only an invoice request or phone | Shipping methods/tax rules not configured, or no matching shipping method | Enter merchant-approved Shipping/Tax data in admin; an invoice request is not an order |
 | PayPal button missing | PayPal disabled or credentials empty | Settings → Payments; hard-refresh after saving |
 | Webhook 503 | Webhook ID not set | Add it in Settings → Payments |
 | Uploads fail | `public/uploads` not writeable | `chmod -R 775 public/uploads` |

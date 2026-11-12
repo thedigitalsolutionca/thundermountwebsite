@@ -99,7 +99,7 @@ if ((int) $stats['total'] > 0) {
               <span class="badge badge-green" style="margin-left:8px">Your dealer price</span>
             <?php elseif ($price['on_sale']): ?>
               <span class="price-old"><?= e(money($price['list_cents'])) ?></span>
-              <span class="badge badge-red">Save <?= e(money(($price['list_cents'] - $price['unit_cents']) / 100)) ?></span>
+              <span class="badge badge-red">Save <?= e(money($price['list_cents'] - $price['unit_cents'])) ?></span>
             <?php endif; ?>
           <?php endif; ?>
         </div>

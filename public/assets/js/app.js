@@ -52,8 +52,10 @@
       return;
     }
     var node = document.createElement('div');
-    node.className = 'toast toast-' + (type || 'success');
-    node.innerHTML = '<span>' + escapeHtml(message) + '</span><button type="button" aria-label="Dismiss">&times;</button>';
+    var kind = ['success', 'error', 'info'].indexOf(type) >= 0 ? type : 'info';
+    node.className = 'toast flash flash-' + kind;
+    node.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+    node.innerHTML = '<div class="flash-copy"><strong>' + (kind === 'error' ? 'Please check' : kind === 'success' ? 'Success' : 'Notice') + '</strong><span>' + escapeHtml(message) + '</span></div><button class="flash-close" type="button" aria-label="Dismiss">&times;</button>';
     node.querySelector('button').addEventListener('click', function () {
       node.remove();
     });
@@ -97,8 +99,17 @@
   }
 
   // ---------------------------------------------------------------------
-  // Cart drawer
+  // Overlays share one scroll lock so closing a dialog never unlocks an open cart.
   // ---------------------------------------------------------------------
+  function syncScrollLock() {
+    document.body.classList.toggle('no-scroll',
+      (drawer && drawer.classList.contains('open')) ||
+      (searchModal && searchModal.classList.contains('open')) ||
+      (quickModal && quickModal.classList.contains('open')) ||
+      (mobileNav && mobileNav.classList.contains('open')));
+  }
+
+  // Cart drawer
   var drawer = $('#cart-drawer');
 
   function openDrawer() {
@@ -107,7 +118,7 @@
     }
     drawer.classList.add('open');
     drawer.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('no-scroll');
+    syncScrollLock();
     refreshDrawer();
     var close = $('[data-close-cart]', drawer);
     if (close) {
@@ -121,7 +132,7 @@
     }
     drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('no-scroll');
+    syncScrollLock();
   }
 
   $$('[data-open-cart]').forEach(function (button) {
@@ -134,33 +145,37 @@
     button.addEventListener('click', closeDrawer);
   });
 
-  // Add to cart
-  $$('form[data-add-to-cart]').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var submit = form.querySelector('button[type="submit"]');
-      var original = submit ? submit.innerHTML : '';
-      if (submit) {
-        submit.disabled = true;
-        submit.textContent = 'Adding…';
+  // Add to cart — delegated so quick-view and freshly rendered forms work.
+  document.addEventListener('submit', function (event) {
+    var form = event.target.closest ? event.target.closest('form[data-add-to-cart]') : null;
+    if (!form) {
+      return;
+    }
+    event.preventDefault();
+    var submit = form.querySelector('button[type="submit"]');
+    var original = submit ? submit.innerHTML : '';
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = 'Adding…';
+    }
+    request('/cart/add', { method: 'POST', body: new FormData(form) }).then(function (payload) {
+      if (!payload.ok) {
+        toast(payload.message || 'Could not add that item.', 'error');
+        return;
       }
-      request('/cart/add', { method: 'POST', body: new FormData(form) }).then(function (payload) {
-        if (!payload.ok) {
-          toast(payload.message || 'Could not add that item.', 'error');
-          return;
-        }
-        setCartCount(payload.count);
-        refreshDrawer();
-        openDrawer();
-        toast(payload.message || 'Added to your cart.', 'success');
-      }).catch(function () {
-        toast('Network error. Please try again.', 'error');
-      }).finally(function () {
-        if (submit) {
-          submit.disabled = false;
-          submit.innerHTML = original;
-        }
-      });
+      setCartCount(payload.count);
+      if (quickModal && quickModal.classList.contains('open')) {
+        closeQuickView(false);
+      }
+      openDrawer();
+      toast(payload.message || 'Added to your cart.', 'success');
+    }).catch(function () {
+      toast('Network error. Please try again.', 'error');
+    }).finally(function () {
+      if (submit) {
+        submit.disabled = false;
+        submit.innerHTML = original;
+      }
     });
   });
 
@@ -178,23 +193,9 @@
           toast(payload.message || 'Could not update the quantity.', 'error');
           return;
         }
-        if (parseInt(data.get('qty'), 10) <= 0) {
-          window.location.reload();
-          return;
-        }
-        var line = form.closest('.cart-line');
-        if (line && payload.summary) {
-          line.querySelector('strong').textContent = payload.summary.total;
-        }
-        refreshDrawer();
-        setCartCount(payload.count);
-        if (payload.summary && payload.summary.total) {
-          var total = $('[data-total-total]');
-          if (total) {
-            total.textContent = payload.summary.total;
-          }
-        }
-        toast('Quantity updated.', 'success');
+        // Re-render from the server: discounts, line totals, counts and availability
+        // can all change with quantity. The response flashes the success message.
+        window.location.reload();
       }).catch(function () {
         toast('Network error. Please try again.', 'error');
       });
@@ -238,7 +239,7 @@
     menuToggle.addEventListener('click', function () {
       var open = mobileNav.classList.toggle('open');
       menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      document.body.classList.toggle('no-scroll', open);
+      syncScrollLock();
     });
   }
 
@@ -249,30 +250,39 @@
   var searchInput = $('[data-search-input]');
   var searchResults = $('[data-search-results]');
   var searchTimer;
+  var searchReturnFocus = null;
 
-  function openSearch() {
+  function openSearch(trigger) {
     if (!searchModal) {
       return;
     }
+    searchReturnFocus = trigger || document.activeElement;
     searchModal.classList.add('open');
     searchModal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('no-scroll');
-    window.setTimeout(function () { if (searchInput) { searchInput.focus(); } }, 40);
+    syncScrollLock();
+    window.setTimeout(function () {
+      if (searchInput && searchModal.classList.contains('open')) {
+        searchInput.focus();
+      }
+    }, 40);
   }
 
   function closeSearch() {
-    if (!searchModal) {
+    if (!searchModal || !searchModal.classList.contains('open')) {
       return;
     }
     searchModal.classList.remove('open');
     searchModal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('no-scroll');
+    syncScrollLock();
+    if (searchReturnFocus && searchReturnFocus.isConnected) {
+      searchReturnFocus.focus();
+    }
   }
 
   $$('[data-open-search]').forEach(function (button) {
     button.addEventListener('click', function (event) {
       event.preventDefault();
-      openSearch();
+      openSearch(button);
     });
   });
   $$('[data-close-search]').forEach(function (button) {
@@ -289,18 +299,25 @@
       }
       searchTimer = window.setTimeout(function () {
         request('/search/suggest?q=' + encodeURIComponent(query)).then(function (payload) {
+          if (searchInput.value.trim() !== query) {
+            return; // A newer query has already replaced this one.
+          }
           if (!payload.items || payload.items.length === 0) {
             searchResults.innerHTML = '<p class="small muted">No products matched “' + escapeHtml(query) + '”.</p>';
             return;
           }
           searchResults.innerHTML = payload.items.map(function (item) {
+            var image = item.image || '/assets/img/tm-mount-1.jpg';
+            var imageUrl = /^https?:\/\//i.test(image) ? image : url(image);
             return '<a class="search-result" href="' + escapeHtml(url(item.url)) + '">' +
-              '<img src="' + escapeHtml(base.replace(/\/$/, '') + item.image) + '" alt="" loading="lazy">' +
+              '<img src="' + escapeHtml(imageUrl) + '" alt="" loading="lazy">' +
               '<span><strong>' + escapeHtml(item.name) + '</strong><small>' + escapeHtml(item.sku) + '</small></span>' +
               '<span class="price">' + escapeHtml(item.price) + '</span></a>';
           }).join('');
         }).catch(function () {
-          searchResults.innerHTML = '';
+          if (searchInput.value.trim() === query) {
+            searchResults.innerHTML = '';
+          }
         });
       }, 220);
     });
@@ -310,6 +327,24 @@
     if (event.key === 'Escape') {
       closeSearch();
       closeDrawer();
+      if (mobileNav && mobileNav.classList.contains('open')) {
+        mobileNav.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        syncScrollLock();
+        menuToggle.focus();
+      }
+    }
+    if (event.key === 'Tab' && searchModal && searchModal.classList.contains('open')) {
+      var focusable = $$('a[href], button:not([disabled]), input:not([disabled])', searchModal);
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (first && event.shiftKey && (document.activeElement === first || !searchModal.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (last && !event.shiftKey && (document.activeElement === last || !searchModal.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
     }
     if ((event.key === '/' || (event.key === 'k' && (event.metaKey || event.ctrlKey))) && !/input|textarea|select/i.test(document.activeElement.tagName)) {
       event.preventDefault();
@@ -361,6 +396,125 @@
       }
     });
   });
+
+  $$('[data-flash-auto]').forEach(function (flash) {
+    window.setTimeout(function () {
+      if (flash.isConnected) {
+        flash.classList.add('out');
+        window.setTimeout(function () { flash.remove(); }, 250);
+      }
+    }, 7000);
+  });
+
+  // Quick view ---------------------------------------------------------
+  var quickModal = document.getElementById('quick-view-modal');
+  var quickBody = quickModal ? quickModal.querySelector('[data-quick-view-body]') : null;
+  var quickReturnFocus = null;
+
+  function closeQuickView(returnFocus) {
+    if (!quickModal) {
+      return;
+    }
+    quickModal.classList.remove('open');
+    quickModal.setAttribute('aria-hidden', 'true');
+    syncScrollLock();
+    if (returnFocus !== false && quickReturnFocus && quickReturnFocus.isConnected) {
+      quickReturnFocus.focus();
+    }
+  }
+
+  function openQuickView(data, trigger) {
+    if (!quickModal || !quickBody || !data) {
+      return;
+    }
+    quickReturnFocus = trigger || null;
+    var image = escapeHtml(data.image || '');
+    var name = escapeHtml(data.name || '');
+    var detailUrl = escapeHtml(data.url || '#');
+    var compare = data.compare ? '<span class="price-old">' + escapeHtml(data.compare) + '</span>' : '';
+    var description = data.description ? '<p class="desc">' + escapeHtml(data.description) + '</p>' : '';
+    var buy = '';
+    if (data.can_purchase) {
+      buy = '<form action="' + escapeHtml(url('/cart/add')) + '" method="post" data-add-to-cart>' +
+        '<input type="hidden" name="_token" value="' + escapeHtml(TM.csrf || '') + '">' +
+        '<input type="hidden" name="product_id" value="' + escapeHtml(data.id) + '">' +
+        '<input type="hidden" name="qty" value="1">' +
+        '<button class="btn btn-primary" type="submit">Add to Cart</button></form>' +
+        '<a class="btn btn-outline" href="' + detailUrl + '">Full details</a>';
+    } else if (data.availability === 'preorder') {
+      buy = '<a class="btn btn-primary" href="' + detailUrl + '#notify">Notify me</a><a class="btn btn-outline" href="' + detailUrl + '">Full details</a>';
+    } else {
+      buy = '<a class="btn btn-primary" href="' + escapeHtml(data.quote_url || data.url || '#') + '">' +
+        (data.availability === 'quote' ? 'Request a quote' : 'Check availability') +
+        '</a><a class="btn btn-outline" href="' + detailUrl + '">Full details</a>';
+    }
+    quickModal.querySelector('#quick-view-title').textContent = 'Quick view: ' + (data.name || 'Product');
+    quickBody.innerHTML = '<div class="quick-view">' +
+      '<div class="quick-view-media"><img src="' + image + '" alt="' + name + '" width="600" height="600"></div>' +
+      '<div class="quick-view-body">' +
+        (data.category ? '<span class="cat">' + escapeHtml(data.category) + '</span>' : '') +
+        '<h2>' + name + '</h2>' +
+        '<span class="sku">Model ' + escapeHtml(data.model || '') + ' · SKU ' + escapeHtml(data.sku || '') + '</span>' +
+        '<div class="price-row"><span class="price">' + escapeHtml(data.price || '') + '</span>' + compare + '</div>' +
+        description +
+        '<span class="stock ' + escapeHtml(data.stock_class || '') + '"><i class="dot"></i>' + escapeHtml(data.stock || '') + '</span>' +
+        '<div class="buy-row">' + buy + '</div>' +
+      '</div></div>';
+    quickModal.classList.add('open');
+    quickModal.setAttribute('aria-hidden', 'false');
+    syncScrollLock();
+    var close = quickModal.querySelector('[data-close-quick-view].close-x');
+    if (close) {
+      close.focus();
+    }
+  }
+
+  document.addEventListener('click', function (event) {
+    var trigger = event.target.closest ? event.target.closest('[data-quick-view]') : null;
+    if (trigger) {
+      event.preventDefault();
+      var raw = trigger.getAttribute('data-quick-view');
+      try {
+        openQuickView(JSON.parse(raw), trigger);
+      } catch (error) {
+        var card = trigger.closest('.product-card');
+        window.location.href = card && card.querySelector('a[href]') ? card.querySelector('a[href]').href : base;
+      }
+      return;
+    }
+    if (event.target.closest && event.target.closest('[data-close-quick-view]')) {
+      event.preventDefault();
+      closeQuickView();
+    }
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (!quickModal || !quickModal.classList.contains('open')) {
+      return;
+    }
+    if (event.key === 'Escape') {
+      closeQuickView();
+    }
+    if (event.key === 'Tab') {
+      var focusable = $$('a[href], button:not([disabled]), input:not([disabled])', quickModal);
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (!first) {
+        return;
+      }
+      if (event.shiftKey && (document.activeElement === first || !quickModal.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !quickModal.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  // Expose a tiny public API for page-specific scripts (checkout errors, etc).
+  TM.toast = toast;
+  window.TM = TM;
 
   var announce = $('#announce-bar');
   if (announce) {

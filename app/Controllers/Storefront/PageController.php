@@ -14,6 +14,7 @@ use App\Core\Settings;
 use App\Core\View;
 use App\Services\CatalogService;
 use App\Services\ContentService;
+use App\Content\Journal;
 
 final class PageController
 {
@@ -74,6 +75,12 @@ final class PageController
         $urls = [];
         foreach ([['/', '1.0', 'weekly'], ['/shop', '0.9', 'daily'], ['/dealer-program', '0.7', 'monthly'], ['/contact', '0.6', 'monthly'], ['/order-lookup', '0.3', 'yearly']] as $entry) {
             $urls[] = ['loc' => absolute_url($entry[0]), 'priority' => $entry[1], 'changefreq' => $entry[2], 'lastmod' => null];
+        }
+        foreach (['/about/inventor', '/portfolio', '/size-guide', '/resources/instructions', '/sales-sheet', '/blog', '/book-online'] as $path) {
+            $urls[] = ['loc' => absolute_url($path), 'priority' => '0.6', 'changefreq' => 'monthly', 'lastmod' => null];
+        }
+        foreach (Journal::all() as $post) {
+            $urls[] = ['loc' => absolute_url('/blog/' . $post['slug']), 'priority' => '0.5', 'changefreq' => 'monthly', 'lastmod' => null];
         }
         foreach ($catalog->categories() as $category) {
             $urls[] = ['loc' => absolute_url('/shop?category=' . urlencode($category['slug'])), 'priority' => '0.8', 'changefreq' => 'weekly', 'lastmod' => null];

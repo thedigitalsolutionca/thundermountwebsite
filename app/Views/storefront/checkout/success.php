@@ -10,9 +10,9 @@ $createdAccount = (bool) Session::get('checkout_created_account', false);
     <div class="card">
       <div class="card-body" style="padding:34px">
         <div class="success-mark" aria-hidden="true"><?= icon('check') ?></div>
-        <span class="eyebrow">Order confirmed</span>
+        <span class="eyebrow"><?= $order['payment_status'] === 'paid' ? 'Order confirmed' : 'Order received' ?></span>
         <h1 style="font-size:2.1rem;margin-bottom:6px">Thank you — your order is in.</h1>
-        <p class="muted" style="font-size:1.05rem">Order <strong style="color:var(--ink)"><?= e($order['order_number']) ?></strong>. A confirmation has been sent to <strong style="color:var(--ink)"><?= e($order['email']) ?></strong>.</p>
+        <p class="muted" style="font-size:1.05rem">Order <strong style="color:var(--ink)"><?= e($order['order_number']) ?></strong>. <?= $order['payment_status'] === 'paid' ? 'We’ll send a confirmation to' : 'We’ll send payment instructions to' ?> <strong style="color:var(--ink)"><?= e($order['email']) ?></strong>.</p>
 
         <div class="notice <?= $order['payment_status'] === 'paid' ? 'notice-success' : 'notice-warn' ?>" style="margin:18px 0">
           <?= icon($order['payment_status'] === 'paid' ? 'check' : 'clock') ?>

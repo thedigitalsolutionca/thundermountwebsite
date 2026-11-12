@@ -94,7 +94,7 @@ $availLabels = ['in_stock' => 'In stock', 'preorder' => 'Coming soon', 'quote' =
 
       <div class="panel mt-3 small">
         <strong>Need help choosing?</strong>
-        <p class="muted mb-0">Measure ceiling to opener bolts or track bolt holes. Read the <a href="<?= url('/page/installation') ?>" class="bold red">sizing guide</a> or call <a href="tel:8053386680" class="bold">805-338-6680</a>.</p>
+        <p class="muted mb-0">Measure ceiling to opener bolts or track bolt holes. Read the <a href="<?= url('/size-guide') ?>" class="bold red">sizing guide</a> or call <a href="tel:8053386680" class="bold">805-338-6680</a>.</p>
       </div>
     </aside>
 

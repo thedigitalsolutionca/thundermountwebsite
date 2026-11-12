@@ -10,9 +10,11 @@ use App\Controllers\Storefront\DealerController;
 use App\Controllers\Storefront\HomeController;
 use App\Controllers\Storefront\PageController;
 use App\Controllers\Storefront\ProductController;
+use App\Controllers\Storefront\ResourceController;
 use App\Controllers\Storefront\ShopController;
 use App\Controllers\Storefront\WebhookController;
 use App\Core\Router;
+use App\Core\Response;
 
 return static function (Router $router): void {
     $router->get('/', static fn () => (new HomeController())->index());
@@ -38,6 +40,7 @@ return static function (Router $router): void {
     $router->post('/checkout/paypal/capture', static fn () => (new CheckoutController())->paypalCapture());
     $router->get('/checkout/paypal/return', static fn () => (new CheckoutController())->paypalReturn());
     $router->post('/checkout/manual', static fn () => (new CheckoutController())->manual());
+    $router->post('/checkout/invoice-request', static fn () => (new CheckoutController())->invoiceRequest());
     $router->get('/checkout/success', static fn () => (new CheckoutController())->success());
     $router->get('/checkout/cancel', static fn () => (new CheckoutController())->cancel());
     $router->get('/order-lookup', static fn () => (new CheckoutController())->lookupForm());
@@ -71,6 +74,24 @@ return static function (Router $router): void {
     $router->post('/dealer/apply', static fn () => (new DealerController())->apply());
     $router->get('/dealer/account', static fn () => (new DealerController())->dashboard());
     $router->get('/dealer/orders', static fn () => (new DealerController())->orders());
+
+    // File-backed editorial pages work on already-installed stores without a reseed.
+    $router->get('/about/inventor', static fn () => (new ResourceController())->story());
+    $router->get('/portfolio', static fn () => (new ResourceController())->portfolio());
+    $router->get('/size-guide', static fn () => (new ResourceController())->sizeGuide());
+    $router->get('/resources/instructions', static fn () => (new ResourceController())->instructions());
+    $router->get('/sales-sheet', static fn () => (new ResourceController())->salesSheet());
+    $router->get('/blog', static fn () => (new ResourceController())->blog());
+    $router->get('/blog/{slug}', static fn (string $slug) => (new ResourceController())->article($slug));
+    $router->get('/book-online', static fn () => (new ResourceController())->bookingForm());
+    $router->post('/book-online', static fn () => (new ResourceController())->booking());
+
+    // Preserve the meaningful paths from the old Wix site.
+    $router->get('/howthundermountwascreated', static fn () => Response::redirect(url('/about/inventor'), 301));
+    $router->get('/thundermountsporfolio', static fn () => Response::redirect(url('/portfolio'), 301));
+    $router->get('/step-one-length-chart-selection', static fn () => Response::redirect(url('/size-guide'), 301));
+    $router->get('/mounting-instructions', static fn () => Response::redirect(url('/resources/instructions'), 301));
+    $router->get('/post/{slug}', static fn (string $slug) => (new ResourceController())->legacyPost($slug));
 
     $router->get('/page/{slug}', static fn (string $slug) => (new PageController())->show($slug));
     $router->get('/contact', static fn () => (new PageController())->contactForm());
