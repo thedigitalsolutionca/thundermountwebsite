@@ -23,6 +23,8 @@ $ogImage = absolute_url($ogImage ?? (string) setting('seo.og_image', '/assets/im
 $user = $currentUser ?? Auth::user();
 $announcement = setting('store.announcement', '');
 $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '1';
+$resourceSection = in_array(current_path(), ['/size-guide', '/resources/instructions', '/portfolio', '/sales-sheet', '/page/faq'], true) || is_active('/blog') !== '';
+$aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') !== '';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -112,8 +114,18 @@ $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '
           </div>
         </div>
         <a href="<?= url('/dealer-program') ?>" class="<?= is_active('/dealer') ?>">Dealer Program</a>
-        <a href="<?= url('/page/installation') ?>" class="<?= is_active('/page/installation') ?>">Installation</a>
-        <a href="<?= url('/page/about') ?>" class="<?= is_active('/page/about') ?>">About</a>
+        <div class="has-drop">
+          <a href="<?= url('/size-guide') ?>" class="<?= $resourceSection ? 'active' : '' ?>">Resources <span aria-hidden="true">▾</span></a>
+          <div class="drop">
+            <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
+            <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
+            <a href="<?= url('/portfolio') ?>">Portfolio</a>
+            <a href="<?= url('/blog') ?>">Garage journal</a>
+            <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
+            <a href="<?= url('/page/faq') ?>">FAQ</a>
+          </div>
+        </div>
+        <a href="<?= url('/page/about') ?>" class="<?= $aboutSection ? 'active' : '' ?>">About</a>
         <a href="<?= url('/contact') ?>" class="<?= is_active('/contact') ?>">Contact</a>
       </nav>
 
@@ -134,9 +146,16 @@ $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '
         <a href="<?= url('/shop?category=' . urlencode($category['slug'])) ?>" class="muted">↳ <?= e($category['name']) ?></a>
       <?php endforeach; ?>
       <a href="<?= url('/dealer-program') ?>">Dealer Program</a>
-      <a href="<?= url('/page/installation') ?>">Installation &amp; sizing</a>
+      <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
+      <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
+      <a href="<?= url('/portfolio') ?>">Portfolio</a>
+      <a href="<?= url('/blog') ?>">Garage journal</a>
+      <a href="<?= url('/about/inventor') ?>">Our story</a>
       <a href="<?= url('/page/about') ?>">About</a>
+      <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
+      <a href="<?= url('/book-online') ?>">Request an appointment</a>
       <a href="<?= url('/contact') ?>">Contact</a>
+      <a href="tel:<?= e(preg_replace('/\D+/', '', $phone)) ?>">Call <?= e($phone) ?></a>
       <a href="<?= $user ? url('/account') : url('/login') ?>"><?= $user ? 'My account' : 'Sign in / register' ?></a>
       <div class="mobile-cta">
         <a class="btn btn-primary" href="<?= url('/shop') ?>">Shop Products</a>
@@ -144,18 +163,6 @@ $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '
       </div>
     </nav>
   </header>
-
-  <?php if (!empty($flashMessages)): ?>
-    <div class="container flash-stack" role="status" aria-live="polite">
-      <?php foreach ($flashMessages as $flash): ?>
-        <div class="flash flash-<?= e($flash['type']) ?>">
-          <?= icon($flash['type'] === 'success' ? 'check' : ($flash['type'] === 'error' ? 'bell' : 'shield')) ?>
-          <span><?= e($flash['message']) ?></span>
-          <button type="button" class="flash-close" aria-label="Dismiss" data-flash-close>&times;</button>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  <?php endif; ?>
 
   <main id="main"><?= $content ?></main>
 
@@ -199,16 +206,23 @@ $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '
         <div>
           <h4>Company</h4>
           <a href="<?= url('/page/about') ?>">About Thunder Mounts</a>
+          <a href="<?= url('/about/inventor') ?>">Our story</a>
+          <a href="<?= url('/portfolio') ?>">Portfolio</a>
           <a href="<?= url('/dealer-program') ?>">Dealer program</a>
-          <a href="<?= url('/page/installation') ?>">Installation &amp; sizing</a>
+          <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
+          <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
+          <a href="<?= url('/blog') ?>">Garage journal</a>
           <a href="<?= url('/page/faq') ?>">FAQ</a>
           <a href="<?= url('/contact') ?>">Contact</a>
         </div>
         <div>
           <h4>Support</h4>
           <?php foreach (($footerPages ?? []) as $page): ?>
+            <?php if (in_array($page['slug'], ['dealer-program', 'installation'], true)) continue; ?>
             <a href="<?= url('/page/' . urlencode($page['slug'])) ?>"><?= e(html_entity_decode($page['title'])) ?></a>
           <?php endforeach; ?>
+          <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
+          <a href="<?= url('/book-online') ?>">Request an appointment</a>
           <a href="<?= url('/order-lookup') ?>">Track an order</a>
           <a href="<?= $user ? url('/account') : url('/login') ?>"><?= $user ? 'My account' : 'Sign in' ?></a>
           <a href="<?= url('/dealer/login') ?>">Dealer login</a>
@@ -285,7 +299,46 @@ $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '
     </div>
   </div>
 
-  <div class="toast-wrap" data-toast-wrap aria-live="polite"></div>
+  <!-- Quick view dialog -->
+  <div class="modal-wrap" id="quick-view-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-quick-view></div>
+    <div class="modal modal-lg" role="dialog" aria-modal="true" aria-labelledby="quick-view-title">
+      <div class="modal-head">
+        <h3 id="quick-view-title">Quick view</h3>
+        <button class="close-x" type="button" data-close-quick-view aria-label="Close quick view">&times;</button>
+      </div>
+      <div data-quick-view-body></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" data-toast-wrap aria-live="polite" aria-atomic="false">
+    <?php foreach (($flashMessages ?? []) as $flash): ?>
+      <?php
+      $flashType = in_array($flash['type'], ['success', 'error', 'info'], true) ? $flash['type'] : 'info';
+      $flashLabel = $flashType === 'success' ? 'Success' : ($flashType === 'error' ? 'Please check' : 'Notice');
+      ?>
+      <div class="toast flash flash-<?= e($flashType) ?>" role="<?= $flashType === 'error' ? 'alert' : 'status' ?>" data-flash-auto>
+        <?= icon($flashType === 'success' ? 'check' : ($flashType === 'error' ? 'bell' : 'shield')) ?>
+        <div class="flash-copy">
+          <strong><?= e($flashLabel) ?></strong>
+          <span><?= e($flash['message']) ?></span>
+        </div>
+        <button type="button" class="flash-close" aria-label="Dismiss" data-flash-close>&times;</button>
+      </div>
+    <?php endforeach; ?>
+    <?php $formErrors = array_values(array_unique(array_filter(errors(), 'is_string'))); ?>
+    <?php if ($formErrors !== []): ?>
+      <div class="toast flash flash-error" role="alert" data-flash-auto>
+        <?= icon('bell') ?>
+        <div class="flash-copy">
+          <strong>Please review the form</strong>
+          <span><?= e(implode(' · ', array_slice($formErrors, 0, 2))) ?><?= count($formErrors) > 2 ? e(' · ' . (count($formErrors) - 2) . ' more fields need attention.') : '' ?></span>
+        </div>
+        <button type="button" class="flash-close" aria-label="Dismiss" data-flash-close>&times;</button>
+      </div>
+    <?php endif; ?>
+  </div>
+  <?php clear_input(); // After the content and toast have read errors/old input. ?>
   <script src="<?= asset('js/app.js') ?>" defer></script>
   <?= $scripts ?? '' ?>
 </body>

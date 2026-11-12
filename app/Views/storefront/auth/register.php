@@ -41,8 +41,9 @@ $errs = errors();
           </div>
           <div class="form-row">
             <div class="field">
-              <label for="reg-phone">Phone <span class="muted">(optional)</span></label>
-              <input class="input" id="reg-phone" name="phone" type="tel" value="<?= e(old('phone')) ?>" autocomplete="tel">
+              <label for="reg-phone">Phone</label>
+              <input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="reg-phone" name="phone" type="tel" value="<?= e(old('phone')) ?>" required autocomplete="tel">
+              <?php if (isset($errs['phone'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['phone']) ?></span><?php endif; ?>
             </div>
             <div class="field">
               <label for="company">Company <span class="muted">(optional)</span></label>
@@ -73,4 +74,3 @@ $errs = errors();
     </div>
   </div>
 </div>
-<?php clear_input(); ?>

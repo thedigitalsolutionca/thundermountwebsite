@@ -81,7 +81,7 @@ Create the administrator, then:
 
 1. Set `ALLOW_INSTALL=0` (or delete the variable) and redeploy.
 2. Sign in at `/admin/login`.
-3. Configure Shipping, Tax, Email/SMTP, PayPal sandbox and Checkout.
+3. Configure Shipping, Tax, Email/SMTP, PayPal sandbox and Checkout. On an existing database, deploying code does **not** enable pay by invoice: review **Settings → Checkout** if the merchant wants invoice orders. Without configured shipping/tax rules, enabled invoice checkout collects a request in **Admin → Messages** instead of creating an order; the merchant must confirm the total manually.
 
 Alternatively use the Railway shell:
 
@@ -97,6 +97,7 @@ php install.php --name="Store Owner" --email=owner@example.com --password="a-lon
 - [ ] Product image upload survives a redeploy (volume mounted)
 - [ ] Shipping base location, zone and method saved
 - [ ] Tax rate saved and visible at checkout
+- [ ] Invoice option reviewed with merchant; test a request and (only after entering approved shipping/tax rules) an unpaid invoice order if enabled
 - [ ] SMTP test email arrives
 - [ ] PayPal **sandbox** payment creates a paid order
 - [ ] `APP_KEY` is backed up; changing it breaks stored PayPal/SMTP credentials

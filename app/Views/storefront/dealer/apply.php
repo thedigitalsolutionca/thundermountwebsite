@@ -43,7 +43,7 @@ $v = static fn (string $key, string $default = '') => old($key, $default);
             <div class="field"><label for="dealer-email">Business email</label><input class="input <?= isset($errs['email']) ? 'invalid' : '' ?>" id="dealer-email" name="email" type="email" value="<?= e($v('email', $user['email'] ?? '')) ?>" required></div>
           </div>
           <div class="form-row">
-            <div class="field"><label for="dealer-phone">Phone</label><input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="dealer-phone" name="phone" type="tel" value="<?= e($v('phone', $user['phone'] ?? '')) ?>" required></div>
+            <div class="field"><label for="dealer-phone">Phone</label><input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="dealer-phone" name="phone" type="tel" value="<?= e($v('phone', $user['phone'] ?? '')) ?>" required autocomplete="tel"><?php if (isset($errs['phone'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['phone']) ?></span><?php endif; ?></div>
             <div class="field"><label for="website">Website <span class="muted">(optional)</span></label><input class="input" id="website" name="website" type="url" value="<?= e($v('website')) ?>" placeholder="https://"></div>
           </div>
           <div class="field">
@@ -87,4 +87,3 @@ $v = static fn (string $key, string $default = '') => old($key, $default);
     </form>
   </div>
 </section>
-<?php clear_input(); ?>

@@ -12,8 +12,10 @@ use App\Core\Money;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
+use App\Core\Validator;
 use App\Core\View;
 use App\Services\CheckoutService;
+use App\Services\ContentService;
 use App\Services\OrderService;
 use App\Services\PayPalService;
 use Throwable;
@@ -33,6 +35,8 @@ final class CheckoutController
                 'pageTitle' => 'Checkout',
                 'robots' => 'noindex,nofollow',
                 'readiness' => $readiness,
+                'summary' => cart()->summary(),
+                'data' => $checkout->blankCheckout(old()),
             ], 'layouts/storefront');
         }
 
@@ -42,7 +46,7 @@ final class CheckoutController
         $paypal = new PayPalService();
         return View::render('storefront/checkout/index', [
             'pageTitle' => 'Secure checkout',
-            'metaDescription' => 'Complete your Thunder Mounts order with secure PayPal checkout.',
+            'metaDescription' => 'Complete your Thunder Mounts order with PayPal or pay by invoice, subject to availability.',
             'robots' => 'noindex,nofollow',
             'data' => $data,
             'summary' => $summary,
@@ -161,6 +165,96 @@ final class CheckoutController
         }
         clear_input();
         Response::redirect(url('/checkout/success?order=' . urlencode($result['order']['order_number'])));
+    }
+
+    /**
+     * When rates or tax rules are not configured, collect an invoice enquiry
+     * instead of creating an order with a fictitious zero shipping/tax total.
+     */
+    public function invoiceRequest(): never
+    {
+        Csrf::require();
+        $readiness = CheckoutService::instance()->readiness();
+        if (!$readiness['manual'] || $readiness['ready']) {
+            flash('error', 'Invoice requests are not available. Please use the normal checkout or call us.');
+            Response::redirect(url('/checkout'));
+        }
+        if (cart()->isEmpty()) {
+            flash('error', 'Add a product before requesting an invoice.');
+            Response::redirect(url('/cart'));
+        }
+        $input = [];
+        foreach (['first_name', 'last_name', 'email', 'phone', 'address1', 'city', 'state', 'postcode', 'country', 'customer_note'] as $field) {
+            $value = Request::post($field, '');
+            $input[$field] = is_string($value) ? trim($value) : '';
+        }
+        $validator = (new Validator($input, [
+            'first_name' => 'First name',
+            'last_name' => 'Last name',
+            'email' => 'Email address',
+            'phone' => 'Phone number',
+            'address1' => 'Street address',
+            'city' => 'City',
+            'state' => 'State or province',
+            'postcode' => 'ZIP or postal code',
+            'country' => 'Country',
+        ]))->validate([
+            'first_name' => 'required|max:80',
+            'last_name' => 'required|max:80',
+            'email' => 'required|email|max:190',
+            'phone' => 'required|phone|max:30',
+            'address1' => 'required|max:190',
+            'city' => 'required|max:100',
+            'state' => 'required|max:60',
+            'postcode' => 'required|postcode',
+            'country' => 'required|in:US,CA',
+            'customer_note' => 'max:1000',
+        ]);
+        $errors = $validator->errors();
+        if (mb_strlen(trim((string) ($input['first_name'] ?? '') . ' ' . (string) ($input['last_name'] ?? ''))) > 120) {
+            $errors['last_name'] = 'Please shorten the name to 120 characters or fewer.';
+        }
+        $summary = cart()->summary();
+        if ($summary['has_unavailable']) {
+            $errors['cart'] = 'Remove unavailable items from the cart before requesting an invoice.';
+        }
+        if ($summary['discount_error']) {
+            $errors['discount'] = $summary['discount_error'] . ' Remove the code before requesting an invoice.';
+        }
+        if ($errors !== []) {
+            Session::set('_errors', $errors);
+            remember_input($input);
+            Response::redirect(url('/checkout'));
+        }
+
+        $lines = [];
+        foreach ($summary['items'] as $item) {
+            $lines[] = $item['product']['sku'] . ' — ' . $item['product']['name'] . ' × ' . $item['qty'] . ' — ' . money($item['line_cents']);
+        }
+        $message = "Invoice enquiry — no order placed and no payment taken. Shipping and tax to be confirmed.\n\n"
+            . "Cart:\n" . implode("\n", $lines) . "\n"
+            . 'Product subtotal: ' . money($summary['subtotal_cents']) . "\n"
+            . ($summary['discount'] ? 'Discount code: ' . $summary['discount_code'] . ' (estimated saving ' . money($summary['discount_amount_cents']) . ")\n" : '')
+            . 'Estimated product total: ' . money($summary['subtotal_cents'] - $summary['discount_amount_cents']) . "\n\n"
+            . 'Ship to: ' . $input['address1'] . ', ' . $input['city'] . ', '
+            . strtoupper($input['state']) . ' ' . strtoupper($input['postcode']) . ', '
+            . strtoupper($input['country']) . "\n"
+            . 'Customer note: ' . ($input['customer_note'] ?: 'None.');
+        $result = (new ContentService())->contact([
+            'name' => trim($input['first_name'] . ' ' . $input['last_name']),
+            'email' => $input['email'],
+            'phone' => $input['phone'],
+            'subject' => 'Invoice request from checkout',
+            'message' => $message,
+        ]);
+        if (!$result['ok']) {
+            Session::set('_errors', $result['errors']);
+            remember_input($input);
+            Response::redirect(url('/checkout'));
+        }
+        clear_input();
+        flash('success', 'Your invoice request is saved. No order or payment was placed; we will confirm shipping, tax and the invoice with you.');
+        Response::redirect(url('/cart'));
     }
 
     public function success(): string

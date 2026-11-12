@@ -27,7 +27,7 @@ final class AccountService
             'first_name' => 'required|max:80',
             'last_name' => 'required|max:80',
             'email' => 'required|email|max:190',
-            'phone' => 'phone|max:30',
+            'phone' => 'required|phone|max:30',
             'company' => 'max:120',
             'password' => 'required|min:8|max:200',
         ]);
@@ -121,7 +121,7 @@ final class AccountService
             'first_name' => 'required|max:80',
             'last_name' => 'required|max:80',
             'email' => 'required|email|max:190',
-            'phone' => 'phone|max:30',
+            'phone' => 'required|phone|max:30',
             'company' => 'max:120',
         ]);
         if ($validator->fails()) {
@@ -243,6 +243,7 @@ final class AccountService
             'city' => 'City',
             'state' => 'State',
             'postcode' => 'Postal code',
+            'phone' => 'Phone number',
         ]))->validate([
             'label' => 'required|max:60',
             'first_name' => 'required|max:80',
@@ -252,6 +253,7 @@ final class AccountService
             'state' => 'required|max:60',
             'postcode' => 'required|postcode',
             'country' => 'required|max:2',
+            'phone' => 'required|phone|max:30',
         ]);
         if ($validator->fails()) {
             return ['ok' => false, 'errors' => $validator->errors()];

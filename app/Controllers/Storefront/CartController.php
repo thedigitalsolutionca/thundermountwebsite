@@ -48,6 +48,9 @@ final class CartController
         $qty = Request::int('qty', 1);
         $result = cart()->updateQty($itemId, $qty);
         if ($this->ajax()) {
+            if ($result['ok']) {
+                flash('success', $result['message']);
+            }
             Response::json(array_merge($result, [
                 'count' => cart()->count(),
                 'summary' => $this->summaryPayload(),

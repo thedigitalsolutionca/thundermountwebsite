@@ -52,7 +52,7 @@ $email = setting('store.email', 'thunder@thundermounts.com');
             <li>Door weight and height</li>
             <li>A photo of the ceiling and opener</li>
           </ul>
-          <p class="small" style="margin:10px 0 0"><a class="bold" href="<?= url('/page/installation') ?>">Read the installation &amp; sizing guide →</a></p>
+          <p class="small" style="margin:10px 0 0"><a class="bold" href="<?= url('/size-guide') ?>">Read the installation &amp; sizing guide →</a></p>
         </div>
       </div>
 
@@ -75,8 +75,9 @@ $email = setting('store.email', 'thunder@thundermounts.com');
             </div>
             <div class="form-row">
               <div class="field">
-                <label for="contact-phone">Phone <span class="muted">(optional)</span></label>
-                <input class="input" id="contact-phone" name="phone" type="tel" value="<?= e(old('phone', $user['phone'] ?? '')) ?>" autocomplete="tel">
+                <label for="contact-phone">Phone</label>
+                <input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="contact-phone" name="phone" type="tel" value="<?= e(old('phone', $user['phone'] ?? '')) ?>" required autocomplete="tel">
+                <?php if (isset($errs['phone'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['phone']) ?></span><?php endif; ?>
               </div>
               <div class="field">
                 <label for="contact-subject">Subject</label>
@@ -109,4 +110,3 @@ $email = setting('store.email', 'thunder@thundermounts.com');
     </div>
   </div>
 </section>
-<?php clear_input(); ?>

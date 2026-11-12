@@ -9,6 +9,31 @@ $availabilityClass = match ($availability['key']) {
     'preorder' => 'stock-pre',
     default => 'stock-out',
 };
+$comparePrice = '';
+if ($availability['key'] !== 'quote') {
+    if ($price['is_dealer'] && $price['unit_cents'] < $price['retail_cents']) {
+        $comparePrice = money($price['retail_cents']) . ' retail';
+    } elseif ($price['on_sale']) {
+        $comparePrice = money($price['list_cents']);
+    }
+}
+$quickData = [
+    'id' => (int) $product['id'],
+    'name' => (string) $product['name'],
+    'sku' => (string) $product['sku'],
+    'model' => (string) $product['model'],
+    'category' => (string) ($product['category_name'] ?? ''),
+    'price' => $availability['key'] === 'quote' ? 'Request a quote' : money($price['unit_cents']),
+    'compare' => $comparePrice,
+    'image' => upload_url($image),
+    'description' => (string) ($product['short_description'] ?? ''),
+    'url' => url($product['url']),
+    'stock' => (string) $availability['label'],
+    'stock_class' => $availabilityClass,
+    'can_purchase' => (bool) $product['can_purchase'],
+    'availability' => (string) $availability['key'],
+    'quote_url' => url('/contact?subject=' . urlencode(($availability['key'] === 'quote' ? 'Quote request: ' : 'Availability: ') . $product['name'])),
+];
 ?>
 <article class="product-card">
   <div class="media">
@@ -21,6 +46,11 @@ $availabilityClass = match ($availability['key']) {
       <?php if ($availability['key'] === 'preorder'): ?><span class="badge badge-amber">Coming soon</span><?php endif; ?>
       <?php if ($availability['key'] === 'quote'): ?><span class="badge badge-blue">Quote</span><?php endif; ?>
       <?php if ($price['is_dealer']): ?><span class="badge badge-green">Dealer price</span><?php endif; ?>
+    </div>
+    <div class="quick">
+      <button class="btn btn-light btn-sm" type="button" data-quick-view="<?= e(json_encode($quickData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT)) ?>">
+        Quick View
+      </button>
     </div>
   </div>
   <div class="body">

@@ -99,7 +99,7 @@ $checkoutReady = $readiness['ready'];
               <?php endif; ?>
               <div class="totals-row"><span>Shipping</span><span class="muted small">Calculated at checkout</span></div>
               <div class="totals-row"><span>Tax</span><span class="muted small">Calculated at checkout</span></div>
-              <div class="totals-row total"><span>Estimated total</span><span><?= e(money(($summary['subtotal_cents'] - $summary['discount_amount_cents']) / 100)) ?></span></div>
+              <div class="totals-row total"><span>Estimated total</span><span><?= e(money($summary['subtotal_cents'] - $summary['discount_amount_cents'])) ?></span></div>
 
               <?php if ($summary['has_unavailable']): ?>
                 <div class="notice notice-warn" style="margin-top:12px"><?= icon('bell') ?><div>Remove unavailable items before checkout.</div></div>
@@ -107,6 +107,9 @@ $checkoutReady = $readiness['ready'];
 
               <?php if ($checkoutReady && !$summary['has_unavailable']): ?>
                 <a class="btn btn-primary btn-block btn-lg mt-2" href="<?= url('/checkout') ?>">Secure checkout <?= icon('lock') ?></a>
+              <?php elseif ($readiness['manual'] && !$summary['has_unavailable']): ?>
+                <div class="notice notice-info" style="margin-top:12px"><?= icon('bell') ?><div>Shipping and tax are not available online yet. We can review your cart and send a confirmed invoice; no payment is taken when you request one.</div></div>
+                <a class="btn btn-primary btn-block btn-lg mt-2" href="<?= url('/checkout') ?>">Request an invoice <?= icon('arrow-right') ?></a>
               <?php else: ?>
                 <div class="notice notice-info" style="margin-top:12px">
                   <?= icon('phone') ?>
@@ -114,6 +117,7 @@ $checkoutReady = $readiness['ready'];
                 </div>
               <?php endif; ?>
 
+              <?php if ($readiness['paypal']): ?>
               <div class="payments-row" aria-label="Accepted payment methods">
                 <span class="pay-logo paypal">PayPal</span>
                 <span class="pay-logo">VISA</span>
@@ -123,6 +127,9 @@ $checkoutReady = $readiness['ready'];
                 <span class="pay-logo">G&nbsp;Pay</span>
               </div>
               <p class="tiny muted" style="text-align:center;margin:10px 0 0"><?= icon('lock') ?> Payment is processed securely by PayPal. Card details never touch our server.</p>
+              <?php elseif ($readiness['manual']): ?>
+              <p class="tiny muted" style="text-align:center;margin:10px 0 0">Pay by invoice: no payment is collected online. Our team confirms the next steps.</p>
+              <?php endif; ?>
             </div>
           </div>
           <div class="card card-body mt-2 small muted">

@@ -99,7 +99,7 @@ $value = static fn (string $key, string $default = '') => old($key, $edit[$key] 
                     </select>
                   </div>
                 </div>
-                <div class="field"><label for="addr-phone">Phone <span class="muted">(optional)</span></label><input class="input" id="addr-phone" name="phone" type="tel" value="<?= e($value('phone', $edit['phone'] ?? (auth()['phone'] ?? ''))) ?>"></div>
+                <div class="field"><label for="addr-phone">Phone</label><input class="input <?= isset($errs['phone']) ? 'invalid' : '' ?>" id="addr-phone" name="phone" type="tel" value="<?= e($value('phone', $edit['phone'] ?? (auth()['phone'] ?? ''))) ?>" required autocomplete="tel"><?php if (isset($errs['phone'])): ?><span class="hint" style="color:var(--red)"><?= e($errs['phone']) ?></span><?php endif; ?></div>
                 <button class="btn btn-primary btn-block" type="submit"><?= $edit ? 'Save changes' : 'Save address' ?></button>
               </form>
             </div>
@@ -109,4 +109,3 @@ $value = static fn (string $key, string $default = '') => old($key, $edit[$key] 
     </div>
   </div>
 </div>
-<?php clear_input(); ?>

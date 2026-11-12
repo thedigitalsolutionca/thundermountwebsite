@@ -2,10 +2,10 @@
 
 Production-ready PHP application for **Thunder Mount Garage Systems LLC** (Simi Valley, CA). It replaces the Wix storefront with a server-rendered catalog, guest and account checkout, a dealer portal, PayPal payments and a complete admin/CMS.
 
-- **Storefront:** home, shop with filters, product pages, cart drawer, checkout, order lookup, content pages, contact, newsletter.
+- **Storefront:** home, shop with filters and quick view, product pages, cart drawer, checkout, order lookup, content pages, contact, newsletter and responsive search.
 - **Accounts:** register, sign in, password reset, order history, reorder, saved addresses, profile and password.
 - **Dealer program:** application, manual approval, pricing tiers with percentage discounts, portal dashboard and dealer order history.
-- **Checkout:** server-side shipping quotes and tax, PayPal (card, PayPal balance, Apple Pay, Google Pay) or optional “pay by invoice”, stock checks and order emails.
+- **Checkout:** server-side shipping quotes and tax, PayPal (card, PayPal balance, Apple Pay, Google Pay) or merchant-enabled “pay by invoice”, stock checks and order emails. When rates are missing, an invoice enquiry can be saved without placing an order or guessing charges.
 - **Admin:** dashboard, orders and invoices, catalog and images, inventory movements, categories, customers, dealers and tiers, discounts, reviews, contact inbox, pages, newsletter export, shipping zones/methods, tax rates and settings.
 
 Catalog names, SKUs and prices come from the approved Thunder Mounts catalog. Shipping rates, tax rules, dealer tiers, inventory counts, payment credentials and SMTP credentials are **not invented** — they are configured by the merchant in the admin.
@@ -75,7 +75,7 @@ php -S 0.0.0.0:8080 -t public
 - Storefront: <http://localhost:8080>
 - Admin: <http://localhost:8080/admin/login>
 
-The installer creates 6 categories, 19 products, product images, 9 content pages and 43 settings. It refuses to run again once an administrator exists.
+The installer creates 6 categories, 19 products, product images, 9 content pages and 44 settings. It refuses to run again once an administrator exists.
 
 > SQLite is for local development and automated testing. Production should use MySQL.
 
@@ -122,7 +122,9 @@ Until `encrypted.paypal.webhook_id` is set, the endpoint returns 503 (so PayPal 
 
 ### Pay by invoice
 
-If PayPal is not ready, enable **Settings → Checkout → Allow customers to place an order and pay by invoice** and provide instructions. Orders are created unpaid, stock is reduced, and the customer receives payment instructions. The admin can later record payment.
+For **new installations**, pay by invoice is seeded enabled with instructions. **Existing installations are not changed by a deploy:** in **Admin → Settings → Checkout**, enable “Allow customers to place an order and pay by invoice” and review the instructions if the merchant wants this option. Disable it if unpaid invoice orders are not offered. Set up SMTP and confirm the notification address before relying on emailed instructions.
+
+When a real shipping method matches the address and tax is configured, the customer can place an invoice order at checkout. It is created **unpaid**, stock is reduced, and the customer is shown the final shipping/tax-inclusive total. The admin can record payment later. When shipping methods or enabled tax rules are **not configured**, invoice checkout instead offers a **request form** on `/checkout`: the cart and required phone, email and delivery details are saved to **Admin → Messages**, and notification email is attempted. It does **not** create an order, take a payment, reserve stock, or quote a final total. The merchant must confirm shipping, tax, availability and the invoice directly. A customer can also call. Invoice requests are only shown when pay by invoice is enabled; PayPal and other payment methods still require configured shipping/tax rules to take an online order.
 
 ---
 
@@ -149,7 +151,13 @@ Shipping is configured entirely in **Admin → Shipping**, starting with the shi
 - Methods can be `flat`, `weight` (`rate + ceil(weight) × per_unit`) or `free`.
 - Each method supports `min_weight`, `max_weight`, `free_over` (subtotal threshold), estimated business days and ordering.
 
-Tax rates are matched by country and exact destination state in **Admin → Tax**. `tax.shipping_taxable` decides whether shipping is part of the taxable base. If tax is enabled but there are no active rates at all, checkout pauses and asks the customer to call. If rates exist but none match the destination, that order is not taxed.
+Tax rates are matched by country and exact destination state in **Admin → Tax**. `tax.shipping_taxable` decides whether shipping is part of the taxable base. If tax is enabled but there are no active rates at all, checkout cannot place an order; merchant-enabled invoice enquiries remain available. If rates exist but none match the destination, that order is not taxed under the configured rules. Review this behavior with the merchant before go-live.
+
+---
+
+## Editorial pages and customer resources
+
+The storefront includes file-backed `/about/inventor`, `/portfolio`, `/size-guide`, `/resources/instructions`, `/blog` (three new planning guides), `/sales-sheet`, and `/book-online`. Booking requests are contact messages for the team to confirm, **not** calendar reservations. The sales sheet is a printable HTML page; the browser’s “Print / save as PDF” action creates the PDF. The complete Wix article archive and original model-specific instruction documents have **not** been imported: those pages explain the limits and offer contact paths to request the originals. Older selected Wix paths redirect to the closest rebuilt destination. Editorial routes work on existing stores without database reseeding.
 
 ---
 
@@ -247,7 +255,7 @@ There is no test framework dependency. The app was exercised end-to-end with a r
 - dealer application, approval, tier assignment and dealer pricing
 - email rendering for all 13 transactional templates
 
-To repeat the smoke test, serve the app against a SQLite database, add a shipping method and tax rate, then walk the flows above. (The ad-hoc harness is not committed; it depends on a local PHP-WASM runtime.)
+For this storefront refresh, PHP 8.3 syntax checks passed across 146 files using PHP-WASM. Local SQLite requests exercised the editorial routes, booking validation and message persistence, invoice requests without shipping/tax, and a complete unpaid order with test-only shipping/tax rules. Headless Chromium checked home/shop/product/editorial pages at 1440, 768, 390 and 320 px with no horizontal overflow or broken images, plus quick view, search suggestions, cart quantity updates, phone-required registration and a one-page sales-sheet PDF. These checks used an ignored local SQLite file and ad-hoc tools outside the repository; they do **not** confirm the Railway payment, email or shipping configuration. To repeat the business flow, use a fresh SQLite install, add merchant-approved shipping and tax rules in Admin, then run a test order; remove local test data and do not use fabricated rates in production.
 
 ---
 
@@ -264,7 +272,7 @@ These are deliberately blank, because they are business decisions or credentials
 - Confirmation of hours, phone numbers and the public notification email.
 - Dealer tier percentages and minimum-order rules.
 
-Until shipping and tax are configured, checkout intentionally shows a “contact us” state instead of guessing a price.
+Until shipping and tax are configured, checkout does **not** place an online order or invent a price: customers can request an invoice enquiry if that option is enabled, or contact the store directly.
 
 ---
 

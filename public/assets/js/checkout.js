@@ -64,6 +64,9 @@
     errorBox.hidden = false;
     errorBox.appendChild(list);
     errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (window.TM && typeof window.TM.toast === 'function') {
+      window.TM.toast((Array.isArray(errors) ? errors : [errors])[0], 'error');
+    }
   }
 
   function dataPayload(source) {

@@ -38,7 +38,7 @@ final class ContentService
         ]))->validate([
             'name' => 'required|max:120',
             'email' => 'required|email|max:190',
-            'phone' => 'phone|max:30',
+            'phone' => 'required|phone|max:30',
             'subject' => 'required|max:190',
             'message' => 'required|min:10|max:5000',
         ]);

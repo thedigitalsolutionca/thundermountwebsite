@@ -48,4 +48,3 @@ $errs = errors();
     </div>
   </div>
 </div>
-<?php clear_input(); ?>
