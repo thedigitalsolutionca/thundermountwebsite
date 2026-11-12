@@ -40,6 +40,7 @@ The app also accepts Railway’s native `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE
 | `APP_DEBUG` | `false` |
 | `APP_KEY` | `base64:...` — generate once, never change it |
 | `COOKIE_SECURE` | `true` |
+| `PORT` | `8080` |
 | `ALLOW_INSTALL` | `1` for the first deploy only |
 
 Generate `APP_KEY` locally:
@@ -102,6 +103,33 @@ php install.php --name="Store Owner" --email=owner@example.com --password="a-lon
 
 ---
 
+## If Railway shows 502 Bad Gateway
+
+The domain is reachable but Railway cannot reach a port inside the container. Check these in order:
+
+1. **Public networking target port**
+   App service → **Settings → Networking → Public Networking**. The target port must be **8080**. If it is `3000`, `80`, or blank, edit it to `8080`.
+2. **`PORT` variable**
+   App service → **Variables** → add `PORT=8080`. The entrypoint uses `PORT` and falls back to `8080`, but setting it prevents a mismatch with the platform.
+3. **Service root**
+   The service root directory must be the repository root, not `public/`. If the root is `public/`, Railway cannot find the `Dockerfile`.
+4. **Build settings**
+   Settings → Build: builder **Dockerfile**, Dockerfile path **`Dockerfile`**.
+5. **Deployment logs**
+   Deployments → latest deployment → **View Logs**. A successful start logs:
+   ```text
+   Thunder Mounts: starting Apache on 0.0.0.0:8080
+   ```
+   If the container exits before that line, the build or a startup command failed; copy the first error from the log.
+6. **Static probe**
+   Open `https://your-domain/healthz.txt`. It must return `ok` without touching PHP or the database. If it returns 502, the problem is the container/port, not the application.
+7. **Volume path**
+   The uploads volume must mount at `/var/www/html/public/uploads`. Mounting it at `/var/www/html` hides the application.
+
+If `/healthz.txt` works but `/` does not, the container is reachable and the issue is configuration (usually database variables or `APP_KEY`). Set `APP_DEBUG=true` temporarily to see the error.
+
+---
+
 ## Option B — Render
 
 1. **New → Web Service → Build and deploy from a Git repository**.
@@ -154,7 +182,8 @@ For automatic deploys on a VPS, install [Coolify](https://coolify.io) or use a G
 
 - `php:8.3-apache` with `pdo_mysql`, `gd` (JPEG/PNG/WebP) and `mbstring`
 - Apache document root is `public/`; `mod_rewrite`, `mod_headers`, `mod_expires`, `mod_deflate`
-- `docker/entrypoint.sh` rewrites Apache to listen on `$PORT` and fixes permissions for the uploads volume
+- `docker/entrypoint.sh` makes Apache listen on **80, 8080 and `$PORT`**, fixes permissions for the uploads volume and logs the active ports
+- `/healthz.txt` is a static probe that works even before the database is installed
 - `.dockerignore` excludes `.env`, SQLite files, logs, sessions and uploaded media from the image
 - The application reads standard environment variables; no `.env` file is required in the container.
 
