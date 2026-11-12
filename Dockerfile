@@ -27,11 +27,12 @@ COPY . /var/www/html
 COPY docker/apache-thunder.conf /etc/apache2/conf-available/thunder.conf
 COPY docker/entrypoint.sh /usr/local/bin/thunder-entrypoint
 RUN a2enconf thunder \
+    && apache2ctl -t \
     && chmod +x /usr/local/bin/thunder-entrypoint \
     && mkdir -p storage/logs storage/cache storage/sessions \
         public/uploads/products public/uploads/dealers \
     && chown -R www-data:www-data storage public/uploads
 
-EXPOSE 8080
+EXPOSE 80 8080
 ENTRYPOINT ["thunder-entrypoint"]
 CMD ["apache2-foreground"]

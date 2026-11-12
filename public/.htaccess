@@ -6,7 +6,9 @@ DirectoryIndex index.php
   RewriteEngine On
   RewriteBase /
 
-  # Force HTTPS behind Hostinger's proxy.
+  # Force HTTPS behind the hosting proxy. The container health probe is
+  # plain HTTP inside the private network and must not be redirected.
+  RewriteCond %{REQUEST_URI} !^/healthz\.txt$
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

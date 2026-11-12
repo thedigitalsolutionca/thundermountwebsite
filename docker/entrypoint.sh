@@ -1,11 +1,33 @@
 #!/bin/sh
 set -e
 
-PORT="${PORT:-8080}"
+PRIMARY="${PORT:-8080}"
+case "$PRIMARY" in
+    ''|*[!0-9]*) PRIMARY=8080 ;;
+esac
 
-# Railway/Render inject a dynamic port; make Apache listen on it.
-sed -ri "s/^Listen 80$/Listen ${PORT}/" /etc/apache2/ports.conf
-sed -ri "s/:80>/:${PORT}>/" /etc/apache2/sites-available/000-default.conf
+# Listen on 80, 8080 and the platform's PORT so a target-port mismatch cannot
+# produce a 502. Duplicates are removed before Apache starts.
+PORTS="80 8080 ${PRIMARY}"
+UNIQUE=""
+for port in $PORTS; do
+    case " ${UNIQUE} " in
+        *" ${port} "*) ;;
+        *) UNIQUE="${UNIQUE} ${port}" ;;
+    esac
+done
+
+sed -ri '/^[[:space:]]*Listen[[:space:]]+[0-9]+[[:space:]]*$/d' /etc/apache2/ports.conf
+VHOST_PORTS=""
+for port in $UNIQUE; do
+    printf 'Listen %s\n' "$port" >> /etc/apache2/ports.conf
+    VHOST_PORTS="${VHOST_PORTS} *:${port}"
+done
+
+sed -ri "s#<VirtualHost \*:[0-9]+>#<VirtualHost${VHOST_PORTS}>#" \
+    /etc/apache2/sites-available/000-default.conf
+
+echo "Thunder Mounts: Apache listening on ports:${UNIQUE}"
 
 # Runtime directories must stay writable even when a volume is mounted over
 # public/uploads by the platform.
