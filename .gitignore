@@ -1,0 +1,34 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime state
+storage/*.sqlite
+storage/*.sqlite-journal
+storage/*.sqlite-wal
+storage/*.sqlite-shm
+storage/installed.lock
+storage/logs/*
+!storage/logs/.gitkeep
+storage/cache/*
+!storage/cache/.gitkeep
+storage/sessions/*
+!storage/sessions/.gitkeep
+
+# Uploaded media (back these up separately; do not commit customer uploads)
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/.htaccess
+!public/uploads/products/
+public/uploads/products/*
+!public/uploads/products/.gitkeep
+
+# Tooling
+node_modules/
+vendor/
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
