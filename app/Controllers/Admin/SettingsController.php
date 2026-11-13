@@ -25,7 +25,7 @@ final class SettingsController
     public function index(): string
     {
         $tab = (string) Request::query('tab', 'store');
-        $allowedTabs = ['store', 'seo', 'checkout', 'paypal', 'mail', 'preferences', 'users'];
+        $allowedTabs = ['store', 'seo', 'checkout', 'paypal', 'mail', 'preferences', 'chat', 'users'];
         if (!in_array($tab, $allowedTabs, true)) {
             $tab = 'store';
         }
@@ -41,6 +41,13 @@ final class SettingsController
     }
 
     private const GROUPS = [
+        'chat' => [
+            'text' => ['chat.openai_model', 'chat.gemini_model', 'chat.grok_model'],
+            'bool' => ['chat.enabled'],
+            'email' => [],
+            'choice' => ['chat.provider' => ['website', 'openai', 'gemini', 'grok']],
+            'secret' => ['encrypted.chat.openai_key', 'encrypted.chat.gemini_key', 'encrypted.chat.grok_key'],
+        ],
         'store' => [
             'text' => ['store.name', 'store.legal_name', 'store.tagline', 'store.phone', 'store.office_phone', 'store.email', 'store.notification_email', 'store.address', 'store.hours', 'store.currency', 'store.announcement', 'store.announcement_link'],
             'bool' => ['store.announcement_enabled', 'store.newsletter_enabled'],
@@ -107,6 +114,26 @@ final class SettingsController
             return ['group' => 'Unknown settings group.'];
         }
         $errors = [];
+        if ($group === 'chat') {
+            if (!is_string($input['chat.provider'] ?? null) || !in_array($input['chat.provider'], ['website', 'openai', 'gemini', 'grok'], true)) {
+                $errors['chat.provider'] = 'Choose a supported assistant provider.';
+            }
+            foreach (\App\Services\ChatService::MODELS as $provider => $defaultModel) {
+                $model = $input['chat.' . $provider . '_model'] ?? $defaultModel;
+                if (!is_string($model) || !preg_match('/^[a-zA-Z0-9._:\/-]{1,100}$/D', $model)) {
+                    $errors['chat.' . $provider . '_model'] = 'Enter a model ID using letters, numbers, dots, colons, slashes or hyphens (up to 100 characters).';
+                }
+                $input['chat.' . $provider . '_model'] = $model;
+                $secretKey = 'encrypted.chat.' . $provider . '_key';
+                $secret = $input[$secretKey] ?? '';
+                if (!is_string($secret) || strlen($secret) > 1000 || preg_match('/[\r\n]/', $secret)) {
+                    $errors[$secretKey] = 'Enter a valid API key (no line breaks, up to 1000 characters).';
+                } elseif ($secret !== '' && \App\Core\Crypt::encrypt($secret) === null) {
+                    $errors[$secretKey] = 'Configure a secure APP_KEY and OpenSSL before saving API keys.';
+                }
+            }
+            if ($errors !== []) return $errors;
+        }
 
         foreach ($definition['text'] as $key) {
             $value = trim((string) ($input[$key] ?? ''));
@@ -137,6 +164,11 @@ final class SettingsController
             $value = trim((string) ($input[$key] ?? ''));
             if ($value !== '') {
                 Settings::set($key, $value, $group);
+            }
+        }
+        if ($group === 'chat') {
+            foreach (array_keys(\App\Services\ChatService::MODELS) as $provider) {
+                if (!empty($_POST['chat_clear_' . $provider])) Settings::set('encrypted.chat.' . $provider . '_key', '', $group);
             }
         }
         if ($group === 'paypal' && !empty($_POST['paypal_clear_credentials'])) {

@@ -23,8 +23,16 @@ $ogImage = absolute_url($ogImage ?? (string) setting('seo.og_image', '/assets/im
 $user = $currentUser ?? Auth::user();
 $announcement = setting('store.announcement', '');
 $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '1';
-$resourceSection = in_array(current_path(), ['/size-guide', '/resources/instructions', '/portfolio', '/sales-sheet', '/page/faq'], true) || is_active('/blog') !== '';
-$aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') !== '';
+$resourceLinks = [
+    '/benefits' => 'Thunder Mounts Benefits',
+    '/resources/instructions' => 'Instructions',
+    '/installation-standard' => 'Superior Industry Standards',
+    '/mission' => 'Mission',
+    '/about/inventor' => 'Inventor Bio',
+    '/blog' => 'Blog',
+];
+$mainLinks = ['/' => 'Home', '/shop' => 'Shop', '/page/about' => 'About', '/portfolio' => 'Portfolio', '/powder-coating' => 'Powder Coating'];
+$resourceSection = in_array(current_path(), array_keys($resourceLinks), true) || is_active('/blog') !== '';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -101,28 +109,17 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
       </a>
 
       <nav class="nav-main" aria-label="Main navigation">
+        <?php foreach ($mainLinks as $path => $label): ?>
+          <a href="<?= url($path) ?>" class="<?= current_path() === $path ? 'active' : '' ?>" <?= current_path() === $path ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
+        <?php endforeach; ?>
         <div class="has-drop">
-          <a href="<?= url('/shop') ?>" class="<?= is_active('/shop') ?>">Shop <span aria-hidden="true">▾</span></a>
-          <div class="drop">
-            <a href="<?= url('/shop') ?>">All products</a>
-            <?php foreach ($categories as $category): ?>
-              <a href="<?= url('/shop?category=' . urlencode($category['slug'])) ?>"><?= e($category['name']) ?> <span class="muted small">(<?= (int) $category['product_count'] ?>)</span></a>
+          <button class="nav-resource-toggle <?= $resourceSection ? 'active' : '' ?>" type="button" aria-expanded="false" aria-controls="resource-menu" data-resource-toggle>Resources <span aria-hidden="true">▾</span></button>
+          <div class="drop" id="resource-menu">
+            <?php foreach ($resourceLinks as $path => $label): ?>
+              <a href="<?= url($path) ?>" <?= current_path() === $path ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
             <?php endforeach; ?>
           </div>
         </div>
-        <a href="<?= url('/dealer-program') ?>" class="<?= is_active('/dealer') ?>">Dealer Program</a>
-        <div class="has-drop">
-          <a href="<?= url('/size-guide') ?>" class="<?= $resourceSection ? 'active' : '' ?>">Resources <span aria-hidden="true">▾</span></a>
-          <div class="drop">
-            <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
-            <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
-            <a href="<?= url('/portfolio') ?>">Portfolio</a>
-            <a href="<?= url('/blog') ?>">Garage journal</a>
-            <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
-            <a href="<?= url('/page/faq') ?>">FAQ</a>
-          </div>
-        </div>
-        <a href="<?= url('/page/about') ?>" class="<?= $aboutSection ? 'active' : '' ?>">About</a>
         <a href="<?= url('/contact') ?>" class="<?= is_active('/contact') ?>">Contact</a>
       </nav>
 
@@ -138,27 +135,18 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
       </div>
     </div>
     <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
-      <a href="<?= url('/shop') ?>">Shop all</a>
-      <?php foreach ($categories as $category): ?>
-        <a href="<?= url('/shop?category=' . urlencode($category['slug'])) ?>" class="muted">↳ <?= e($category['name']) ?></a>
+      <?php foreach ($mainLinks as $path => $label): ?>
+        <a href="<?= url($path) ?>" <?= current_path() === $path ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
       <?php endforeach; ?>
-      <a href="<?= url('/dealer-program') ?>">Dealer Program</a>
-      <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
-      <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
-      <a href="<?= url('/portfolio') ?>">Portfolio</a>
-      <a href="<?= url('/blog') ?>">Garage journal</a>
-      <a href="<?= url('/about/inventor') ?>">Our story</a>
-      <a href="<?= url('/page/about') ?>">About</a>
-      <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
-      <a href="<?= url('/book-online') ?>">Request an appointment</a>
+      <details class="mobile-resources">
+        <summary>Resources</summary>
+        <?php foreach ($resourceLinks as $path => $label): ?>
+          <a href="<?= url($path) ?>"><?= e($label) ?></a>
+        <?php endforeach; ?>
+      </details>
       <a href="<?= url('/contact') ?>">Contact</a>
-      <a href="tel:<?= e(preg_replace('/\D+/', '', $phone)) ?>">Call <?= e($phone) ?></a>
-      <a href="<?= $user ? url('/account') : url('/login') ?>"><?= $user ? 'My account' : 'Sign in / register' ?></a>
-      <div class="mobile-cta">
-        <a class="btn btn-primary" href="<?= url('/shop') ?>">Shop Products</a>
-        <a class="btn btn-outline" href="<?= url('/dealer/apply') ?>">Become a Dealer</a>
-      </div>
     </nav>
+
   </header>
 
   <main id="main"><?= $content ?></main>
@@ -193,36 +181,20 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
           </p>
         </div>
         <div>
-          <h4>Shop</h4>
-          <?php foreach ($categories as $category): ?>
-            <a href="<?= url('/shop?category=' . urlencode($category['slug'])) ?>"><?= e($category['name']) ?></a>
-          <?php endforeach; ?>
-          <a href="<?= url('/shop') ?>">All products</a>
-        </div>
-        <div>
-          <h4>Company</h4>
-          <a href="<?= url('/page/about') ?>">About Thunder Mounts</a>
-          <a href="<?= url('/about/inventor') ?>">Our story</a>
+          <h4>Explore</h4>
+          <a href="<?= url('/shop') ?>">Shop products</a>
           <a href="<?= url('/portfolio') ?>">Portfolio</a>
-          <a href="<?= url('/dealer-program') ?>">Dealer program</a>
-          <a href="<?= url('/size-guide') ?>">Installation &amp; sizing</a>
-          <a href="<?= url('/resources/instructions') ?>">Mounting instructions</a>
-          <a href="<?= url('/blog') ?>">Garage journal</a>
-          <a href="<?= url('/page/faq') ?>">FAQ</a>
-          <a href="<?= url('/contact') ?>">Contact</a>
+          <a href="<?= url('/powder-coating') ?>">Powder coating</a>
+          <a href="<?= url('/page/about') ?>">About us</a>
         </div>
         <div>
           <h4>Support</h4>
-          <?php foreach (($footerPages ?? []) as $page): ?>
-            <?php if (in_array($page['slug'], ['dealer-program', 'installation'], true)) continue; ?>
-            <a href="<?= url('/page/' . urlencode($page['slug'])) ?>"><?= e(html_entity_decode($page['title'])) ?></a>
-          <?php endforeach; ?>
-          <a href="<?= url('/sales-sheet') ?>">Sales sheet</a>
-          <a href="<?= url('/book-online') ?>">Request an appointment</a>
+          <a href="<?= url('/contact') ?>">Contact</a>
+          <a href="<?= url('/resources/instructions') ?>">Instructions</a>
+          <a href="<?= url('/size-guide') ?>">Sizing guide</a>
           <a href="<?= url('/order-lookup') ?>">Track an order</a>
-          <a href="<?= $user ? url('/account') : url('/login') ?>"><?= $user ? 'My account' : 'Sign in' ?></a>
-          <a href="<?= url('/dealer/login') ?>">Dealer login</a>
         </div>
+
       </div>
 
       <div class="legal">
@@ -231,6 +203,8 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
           <a href="<?= url('/page/privacy') ?>">Privacy</a>
           <a href="<?= url('/page/terms') ?>">Terms</a>
           <a href="<?= url('/sitemap.xml') ?>">Sitemap</a>
+        </span>
+        <span class="footer-credit">Design and Developed by <a href="https://thepietechnologies.com/" target="_blank" rel="noopener noreferrer">The Pie Technologies</a>
         </span>
       </div>
     </div>
@@ -313,7 +287,7 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
     <figure class="lightbox">
       <button class="close-x lightbox-close" type="button" data-close-lightbox aria-label="Close image viewer">&times;</button>
       <button class="lightbox-nav lightbox-prev" type="button" data-lightbox-prev aria-label="Previous image"><?= icon('arrow-left') ?></button>
-      <img id="lightbox-image" class="lightbox-image" src="" alt="">
+      <img id="lightbox-image" class="lightbox-image" alt="">
       <button class="lightbox-nav lightbox-next" type="button" data-lightbox-next aria-label="Next image"><?= icon('arrow-right') ?></button>
       <figcaption class="lightbox-caption">
         <span class="lightbox-counter" data-lightbox-counter></span>
@@ -347,7 +321,7 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
     <?php foreach (($flashMessages ?? []) as $flash): ?>
       <?php
       $flashType = in_array($flash['type'], ['success', 'error', 'info'], true) ? $flash['type'] : 'info';
-      $flashLabel = $flashType === 'success' ? 'Success' : ($flashType === 'error' ? 'Please check' : 'Notice');
+      $flashLabel = $flashType === 'success' ? 'Request confirmed' : ($flashType === 'error' ? 'Please check' : 'Notice');
       ?>
       <div class="toast flash flash-<?= e($flashType) ?>" role="<?= $flashType === 'error' ? 'alert' : 'status' ?>" data-flash-auto>
         <?= icon($flashType === 'success' ? 'check' : ($flashType === 'error' ? 'bell' : 'shield')) ?>
@@ -371,7 +345,9 @@ $aboutSection = is_active('/page/about') !== '' || is_active('/about/inventor') 
     <?php endif; ?>
   </div>
   <?php clear_input(); // After the content and toast have read errors/old input. ?>
+  <?= \App\Core\View::partial('storefront/partials/chatbot') ?>
   <script src="<?= asset('js/app.js') ?>" defer></script>
+  <?php if (\App\Core\Settings::bool('chat.enabled', true)): ?><script src="<?= asset('js/chatbot.js') ?>" defer></script><?php endif; ?>
   <?= $scripts ?? '' ?>
 </body>
 </html>

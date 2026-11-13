@@ -1,7 +1,7 @@
 <?php
 use App\Core\Csrf;
 $errs = errors();
-$tabs = ['store' => 'Store', 'seo' => 'SEO', 'checkout' => 'Checkout', 'paypal' => 'PayPal', 'mail' => 'Email', 'preferences' => 'Preferences', 'users' => 'Admins'];
+$tabs = ['store' => 'Store', 'seo' => 'SEO', 'checkout' => 'Checkout', 'paypal' => 'PayPal', 'mail' => 'Email', 'preferences' => 'Preferences', 'chat' => 'AI Assistant', 'users' => 'Admins'];
 $get = static fn (string $key, string $default = '') => e((string) setting($key, $default));
 ?>
 <div class="admin-head">
@@ -141,6 +141,35 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
         <button class="btn btn-outline" type="submit" formaction="<?= url('/admin/settings/email/test') ?>" formnovalidate>Save &amp; send test email</button>
       </div>
     </div>
+  </form>
+
+<?php elseif ($tab === 'chat'): ?>
+  <form action="<?= url('/admin/settings') ?>" method="post" class="admin-card">
+    <?= csrf_field() ?>
+    <input type="hidden" name="group" value="chat">
+    <div class="admin-card-head"><div><h3>Website assistant &amp; AI providers</h3><span>Public website answers, with optional AI assistance.</span></div></div>
+    <div class="admin-card-body">
+      <label class="check"><input type="checkbox" name="settings[chat.enabled]" value="1" <?= \App\Core\Settings::bool('chat.enabled', true) ? 'checked' : '' ?>><span>Show the assistant on storefront pages</span></label>
+      <div class="field mt-2"><label for="chat-provider">Answer provider</label><select class="select" id="chat-provider" name="settings[chat.provider]">
+        <?php foreach (['website' => 'Website content only — no API key needed', 'gemini' => 'Google Gemini', 'grok' => 'xAI Grok', 'openai' => 'OpenAI'] as $value => $label): ?>
+          <option value="<?= e($value) ?>"<?= selected(setting('chat.provider', 'website'), $value) ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+      </select></div>
+      <p class="muted small">The assistant searches published pages, articles, and public product descriptions. AI mode sends the question and matching excerpts to the selected provider. No account records, order details, or conversation history are included. If a key is missing or the provider fails, the assistant uses website excerpts.</p>
+      <?php foreach (['gemini' => 'Google Gemini', 'grok' => 'xAI Grok', 'openai' => 'OpenAI'] as $provider => $label): ?>
+        <fieldset style="border:1px solid var(--gray-200);border-radius:8px;padding:20px;margin:20px 0">
+          <legend><?= e($label) ?></legend>
+          <div class="field"><label for="chat-<?= e($provider) ?>-key">API key</label>
+            <input class="input" id="chat-<?= e($provider) ?>-key" type="password" name="settings[encrypted.chat.<?= e($provider) ?>_key]" autocomplete="new-password" maxlength="1000" placeholder="Leave blank to keep the saved key">
+            <span class="hint"><?= setting('encrypted.chat.' . $provider . '_key', '') !== '' ? 'A key is saved. It is never displayed here.' : 'No key saved.' ?> Keys are encrypted using APP_KEY. Enter credentials here, never in chat or source code.</span>
+          </div>
+          <div class="field"><label for="chat-<?= e($provider) ?>-model">Model ID</label><input class="input" id="chat-<?= e($provider) ?>-model" name="settings[chat.<?= e($provider) ?>_model]" value="<?= $get('chat.' . $provider . '_model', \App\Services\ChatService::MODELS[$provider]) ?>" required maxlength="100" pattern="[a-zA-Z0-9._:/-]+"><span class="hint">Use a model available to your provider account. Provider billing and availability apply.</span></div>
+          <label class="check"><input type="checkbox" name="chat_clear_<?= e($provider) ?>" value="1"><span>Remove this saved API key when saving</span></label>
+        </fieldset>
+      <?php endforeach; ?>
+      <p class="tiny muted">Production AI mode requires PHP cURL and outbound HTTPS access to api.openai.com, api.x.ai, or generativelanguage.googleapis.com. Website-only mode needs no external AI service. Rate limits: 12 questions/minute per session and 60/hour per IP.</p>
+    </div>
+    <div class="admin-save-row"><button class="btn btn-primary" type="submit">Save assistant settings</button></div>
   </form>
 
 <?php elseif ($tab === 'preferences'): ?>

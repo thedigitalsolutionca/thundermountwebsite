@@ -53,7 +53,7 @@ final class PageController
             Response::redirect(url('/contact'));
         }
         clear_input();
-        flash('success', 'Thanks — your message is with us. We reply during business hours.');
+        flash('success', 'Your message has been received by the Thunder Mounts team. We will review your project details and respond during our business hours. Thank you for considering us for your installation.');
         Response::redirect(url('/contact'));
     }
 
@@ -76,7 +76,7 @@ final class PageController
         foreach ([['/', '1.0', 'weekly'], ['/shop', '0.9', 'daily'], ['/dealer-program', '0.7', 'monthly'], ['/contact', '0.6', 'monthly'], ['/order-lookup', '0.3', 'yearly']] as $entry) {
             $urls[] = ['loc' => absolute_url($entry[0]), 'priority' => $entry[1], 'changefreq' => $entry[2], 'lastmod' => null];
         }
-        foreach (['/about/inventor', '/portfolio', '/size-guide', '/resources/instructions', '/sales-sheet', '/blog', '/book-online'] as $path) {
+        foreach (['/about/inventor', '/portfolio', '/size-guide', '/resources/instructions', '/sales-sheet', '/blog', '/book-online', '/powder-coating', '/mission', '/benefits', '/installation-standard', '/french-porte', '/refer-friends'] as $path) {
             $urls[] = ['loc' => absolute_url($path), 'priority' => '0.6', 'changefreq' => 'monthly', 'lastmod' => null];
         }
         foreach (Journal::all() as $post) {

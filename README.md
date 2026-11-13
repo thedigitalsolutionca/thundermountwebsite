@@ -277,3 +277,11 @@ Until shipping and tax are configured, checkout does **not** place an online ord
 ---
 
 © Thunder Mount Garage Systems LLC. Built as a custom PHP application; no page-builder or SaaS dependency.
+
+## Website assistant
+
+The storefront includes a source-linked website-content assistant. Optional Gemini,
+Grok, and OpenAI providers can be configured under **Admin → Settings → AI Assistant**.
+Keys are encrypted server-side; website-only mode needs no API credentials.
+See [CHATBOT.md](CHATBOT.md) for setup, privacy, rate limits, hosting requirements,
+and local regression checks.

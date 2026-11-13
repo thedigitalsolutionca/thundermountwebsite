@@ -18,6 +18,7 @@ use App\Core\Response;
 
 return static function (Router $router): void {
     $router->get('/', static fn () => (new HomeController())->index());
+    $router->post('/chat/message', static fn () => (new \App\Controllers\Storefront\ChatController())->message());
     $router->get('/shop', static fn () => (new ShopController())->index());
     $router->get('/search', static fn () => (new ShopController())->index());
     $router->get('/search/suggest', static fn () => (new ShopController())->suggestions());
@@ -85,6 +86,20 @@ return static function (Router $router): void {
     $router->get('/blog/{slug}', static fn (string $slug) => (new ResourceController())->article($slug));
     $router->get('/book-online', static fn () => (new ResourceController())->bookingForm());
     $router->post('/book-online', static fn () => (new ResourceController())->booking());
+
+    foreach (['powder-coating', 'mission', 'benefits', 'installation-standard', 'french-porte', 'refer-friends'] as $serviceSlug) {
+        $router->get('/' . $serviceSlug, static fn () => (new ResourceController())->servicePage($serviceSlug));
+    }
+    // All published legacy page URLs retain a meaningful destination.
+    foreach ([
+        '/blank' => '/powder-coating', '/blank-1' => '/refer-friends',
+        '/contact-4' => '/contact', '/about-3' => '/mission',
+        '/about-5-1' => '/installation-standard', '/s-projects-side-by-side' => '/french-porte',
+        '/thundermounts' => '/benefits', '/thunder-mounts' => '/shop',
+        '/items-6' => '/portfolio', '/thunder-mounts-garage-systems/landingpage' => '/installation-standard',
+    ] as $legacyPath => $destination) {
+        $router->get($legacyPath, static fn () => Response::redirect(url($destination), 301));
+    }
 
     // Preserve the meaningful paths from the old Wix site.
     $router->get('/howthundermountwascreated', static fn () => Response::redirect(url('/about/inventor'), 301));
