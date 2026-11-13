@@ -213,7 +213,7 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
               <?php endif; ?>
 
               <?php if ($readiness['manual']): ?>
-                <div class="pay-block" style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px">
+                <div class="pay-block" style="margin-top:16px;border-top:1px solid var(--gray-200);padding-top:16px">
                   <h3 style="font-size:1rem;margin:0 0 4px">Other ways to pay</h3>
                   <p class="small muted"><?= e(Settings::get('checkout.manual_payment_instructions', 'Place your order and we will email payment instructions.')) ?></p>
                   <button type="submit" class="btn btn-outline" formaction="<?= url('/checkout/manual') ?>" data-manual-order>Place order — <?= e(Settings::get('checkout.manual_payment_label', 'Pay by invoice')) ?></button>
@@ -283,10 +283,12 @@ $selectedMethod = (int) ($summary['shipping']['id'] ?? 0);
             <p class="muted" style="margin:4px 0 0"><?= $readiness['paypal'] ? 'Payment is processed by PayPal. We never see or store your card number.' : 'No online payment is taken. We will email you about the invoice and next steps.' ?> Need help? Call <a href="tel:8053386680" class="bold">805-338-6680</a> or email <a href="mailto:thunder@thundermounts.com" class="bold">thunder@thundermounts.com</a>.</p>
           </div>
 
+          <?php if (dealer_applications_enabled() && dealer_pages_enabled() && !\App\Core\Auth::isDealer()): ?>
           <div class="card card-body mt-2 small muted">
             <strong style="color:var(--ink)">Ordering for a business?</strong>
             <p style="margin:4px 0 0">Approved dealers get trade pricing automatically. <a href="<?= url('/dealer/apply') ?>" class="bold">Apply for a dealer account</a>.</p>
           </div>
+          <?php endif; ?>
         </aside>
       </div>
     </form>

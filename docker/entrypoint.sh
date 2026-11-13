@@ -35,7 +35,8 @@ mkdir -p /var/www/html/storage/logs \
          /var/www/html/storage/cache \
          /var/www/html/storage/sessions \
          /var/www/html/public/uploads/products \
-         /var/www/html/public/uploads/dealers
+         /var/www/html/public/uploads/dealers \
+         /var/www/html/public/uploads/gallery
 chown -R www-data:www-data /var/www/html/storage /var/www/html/public/uploads
 
 exec docker-php-entrypoint "$@"

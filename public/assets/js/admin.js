@@ -66,3 +66,36 @@
     toggle.indeterminate = count > 0 && count < boxes.length;
   }); });
 })();
+
+// Gallery & Portfolio media mode switcher (Photo / Upload Video / YouTube & Vimeo)
+(function () {
+  var form = document.querySelector('[data-gallery-form]');
+  if (!form) return;
+  var radios = Array.prototype.slice.call(form.querySelectorAll('[data-gallery-mode]'));
+  var panels = {
+    image: form.querySelector('[data-gallery-panel="image"]'),
+    video_upload: form.querySelector('[data-gallery-panel="video_upload"]'),
+    video_url: form.querySelector('[data-gallery-panel="video_url"]'),
+    poster: form.querySelector('[data-gallery-panel="poster"]')
+  };
+  function syncMode() {
+    var selected = 'image';
+    radios.forEach(function (radio) {
+      var pill = radio.closest('.media-mode-pill');
+      if (radio.checked) {
+        selected = radio.getAttribute('data-gallery-mode') || 'image';
+      }
+      if (pill) {
+        pill.classList.toggle('active', radio.checked);
+      }
+    });
+    if (panels.image) panels.image.hidden = selected !== 'image';
+    if (panels.video_upload) panels.video_upload.hidden = selected !== 'video_upload';
+    if (panels.video_url) panels.video_url.hidden = selected !== 'video_url';
+    if (panels.poster) panels.poster.hidden = selected === 'image';
+  }
+  radios.forEach(function (radio) {
+    radio.addEventListener('change', syncMode);
+  });
+  syncMode();
+})();

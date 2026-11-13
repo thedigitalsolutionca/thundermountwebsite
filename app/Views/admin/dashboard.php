@@ -6,7 +6,8 @@ use App\Core\Money;
     <h2>Good <?= date('H') < 12 ? 'morning' : (date('H') < 17 ? 'afternoon' : 'evening') ?></h2>
     <p>Reporting period: <?= e($range['label']) ?> · <?= e(\App\Core\Config::get('app.timezone', 'America/Los_Angeles')) ?></p>
   </div>
-  <div class="flex" style="gap:8px">
+  <div class="flex wrap" style="gap:8px">
+    <a class="btn btn-outline btn-sm" href="<?= url('/admin/gallery') ?>"><?= icon('image') ?> Gallery &amp; Portfolio</a>
     <a class="btn btn-outline btn-sm" href="<?= url('/admin/products/create') ?>"><?= icon('plus') ?> Add product</a>
     <a class="btn btn-primary btn-sm" href="<?= url('/admin/orders') ?>">View orders</a>
   </div>
@@ -54,7 +55,7 @@ use App\Core\Money;
   <div class="kpi">
     <span>New customers in period</span>
     <strong><?= (int) $customers ?></strong>
-    <small><?= (int) $pendingDealers ?> dealer application<?= (int) $pendingDealers === 1 ? '' : 's' ?> pending</small>
+    <small><?= dealer_program_enabled() ? ((int) $pendingDealers . ' dealer application' . ((int) $pendingDealers === 1 ? '' : 's') . ' pending') : 'Dealer program closed' ?></small>
   </div>
 </div>
 

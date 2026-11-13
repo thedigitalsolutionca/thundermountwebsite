@@ -144,11 +144,19 @@
         <h3>Ships from California</h3>
         <p>Orders ship via UPS from our Simi Valley base, with tracking sent when your order leaves us.</p>
       </div>
+      <?php if (dealer_pages_enabled()): ?>
       <div class="benefit">
         <div class="ico"><?= icon('users') ?></div>
         <h3>Dealer program</h3>
         <p>Installers and distributors can apply for a dealer account with trade pricing and dealer ordering.</p>
       </div>
+      <?php else: ?>
+      <div class="benefit">
+        <div class="ico"><?= icon('star') ?></div>
+        <h3>Custom powder coating</h3>
+        <p>Coordinate mounts, tracks and hardware in custom colors for a cohesive, finished garage interior.</p>
+      </div>
+      <?php endif; ?>
     </div>
   </div>
 </section>
@@ -216,15 +224,31 @@
 <section class="section">
   <div class="container">
     <div class="grid grid-2" style="align-items:stretch">
+      <?php if (dealer_pages_enabled()): ?>
       <div class="card card-body home-next-card" style="background:var(--gray-50)">
         <span class="eyebrow">Dealer program</span>
         <h2 style="margin-bottom:8px">Buy for the whole crew.</h2>
         <p class="muted">Installers and distributors can apply for a dealer account. Approved dealers sign in to see trade pricing, place orders and track them in one place.</p>
         <div class="flex wrap" style="margin-top:auto">
-          <a class="btn btn-primary" href="<?= url('/dealer/apply') ?>">Apply for a dealer account</a>
+          <?php if (dealer_applications_enabled()): ?>
+            <a class="btn btn-primary" href="<?= url('/dealer/apply') ?>">Apply for a dealer account</a>
+          <?php else: ?>
+            <a class="btn btn-primary" href="<?= url('/dealer-program') ?>">Learn about trade accounts</a>
+          <?php endif; ?>
           <a class="btn btn-outline" href="<?= url('/dealer/login') ?>">Dealer login</a>
         </div>
       </div>
+      <?php else: ?>
+      <div class="card card-body home-next-card" style="background:var(--gray-50)">
+        <span class="eyebrow">Portfolio &amp; gallery</span>
+        <h2 style="margin-bottom:8px">See real garage installations.</h2>
+        <p class="muted">Browse photos and videos of residential and custom garage projects built with Thunder Mounts opener and track mounting systems.</p>
+        <div class="flex wrap" style="margin-top:auto">
+          <a class="btn btn-primary" href="<?= url('/portfolio') ?>">View portfolio &amp; gallery</a>
+          <a class="btn btn-outline" href="<?= url('/powder-coating') ?>">Powder coating</a>
+        </div>
+      </div>
+      <?php endif; ?>
       <div class="card card-body home-next-card">
         <span class="eyebrow">Need help choosing?</span>
         <h2 style="margin-bottom:8px">Measure once, order right.</h2>

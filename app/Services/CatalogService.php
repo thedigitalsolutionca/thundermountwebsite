@@ -227,7 +227,7 @@ final class CatalogService
         $isDealer = false;
         $tierDiscount = 0.0;
 
-        if (Auth::isDealer()) {
+        if (DealerService::isPricingEnabled() && Auth::isDealer()) {
             $isDealer = true;
             $override = !empty($product['dealer_price']) ? Money::toCents($product['dealer_price']) : 0;
             if ($override > 0) {

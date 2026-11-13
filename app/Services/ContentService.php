@@ -15,7 +15,14 @@ final class ContentService
 {
     public function page(string $slug): ?array
     {
-        return Database::first('SELECT * FROM pages WHERE slug = ? AND is_active = 1 LIMIT 1', [$slug]);
+        if ($slug === 'dealer-program' && !DealerService::arePagesEnabled()) {
+            return null;
+        }
+        $page = Database::first('SELECT * FROM pages WHERE slug = ? AND is_active = 1 LIMIT 1', [$slug]);
+        if ($page && !DealerService::isProgramEnabled() && !empty($page['content'])) {
+            $page['content'] = $this->stripDealerMentions((string) $page['content']);
+        }
+        return $page;
     }
 
     public function pages(bool $footerOnly = false): array
@@ -24,7 +31,31 @@ final class ContentService
         if ($footerOnly) {
             $sql .= ' AND show_in_footer = 1';
         }
-        return Database::select($sql . ' ORDER BY sort_order, title');
+        $pages = Database::select($sql . ' ORDER BY sort_order, title');
+        if (!DealerService::arePagesEnabled()) {
+            $pages = array_values(array_filter(
+                $pages,
+                static fn (array $p): bool => ($p['slug'] ?? '') !== 'dealer-program'
+            ));
+        }
+        if (!DealerService::isProgramEnabled()) {
+            foreach ($pages as &$p) {
+                if (!empty($p['content'])) {
+                    $p['content'] = $this->stripDealerMentions((string) $p['content']);
+                }
+            }
+            unset($p);
+        }
+        return $pages;
+    }
+
+    private function stripDealerMentions(string $html): string
+    {
+        $html = preg_replace('/<details[^>]*>\s*<summary>[^<]*dealer[^<]*<\/summary>.*?<\/details>/is', '', $html) ?? $html;
+        $html = preg_replace('/<h3>\s*Do you have a dealer program\?\s*<\/h3>\s*<p>.*?<\/p>/is', '', $html) ?? $html;
+        $html = preg_replace('/<p>[^<]*(?:\/dealer\/apply|\/dealer-program).*?<\/p>/is', '', $html) ?? $html;
+        $html = str_ireplace(', and we support installers with a dealer program.', '.', $html);
+        return trim($html);
     }
 
     public function contact(array $data): array

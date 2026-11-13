@@ -12,7 +12,7 @@ $tier = $dealer['tier'] ?? null;
         <h1 style="font-size:1.9rem;margin-bottom:4px"><?= e($dealer['company']) ?></h1>
         <p class="muted" style="margin:0">Account #<?= (int) $dealer['id'] ?> · Applied <?= e(fmt_date($dealer['applied_at'])) ?></p>
       </div>
-      <span class="badge <?= $status === 'approved' ? 'badge-green' : ($status === 'rejected' ? 'badge-red' : 'badge-amber') ?>" style="font-size:.8rem;padding:8px 12px"><?= e(status_label($status)) ?></span>
+      <span class="badge <?= e(badge_class($status)) ?>" style="font-size:.8rem;padding:8px 12px"><?= e(status_label($status)) ?></span>
     </div>
 
     <?php if ($status === 'pending'): ?>
@@ -24,6 +24,15 @@ $tier = $dealer['tier'] ?? null;
           Questions? Call <a href="tel:8053386680" class="bold">805-338-6680</a>.
         </div>
       </div>
+    <?php elseif ($status === 'inactive'): ?>
+      <div class="notice notice-info">
+        <?= icon('bell') ?>
+        <div>
+          <strong>Dealer trade account inactive.</strong>
+          Your dealer trade pricing is currently inactive, though your past order history and standard customer account remain available.
+          To reactivate your trade account, call <a href="tel:8053386680" class="bold">805-338-6680</a> or email <a href="mailto:thunder@thundermounts.com" class="bold">thunder@thundermounts.com</a>.
+        </div>
+      </div>
     <?php elseif ($status === 'rejected'): ?>
       <div class="notice notice-error">
         <?= icon('bell') ?>
@@ -33,6 +42,11 @@ $tier = $dealer['tier'] ?? null;
           Call <a href="tel:8053386680" class="bold">805-338-6680</a> or email <a href="mailto:thunder@thundermounts.com" class="bold">thunder@thundermounts.com</a>.
         </div>
       </div>
+    <?php elseif (!dealer_pricing_enabled()): ?>
+      <div class="notice notice-info">
+        <?= icon('bell') ?>
+        <div><strong>Trade pricing paused.</strong> Standard store pricing is currently active. Contact us if you need a custom trade quote.</div>
+      </div>
     <?php else: ?>
       <div class="notice notice-success">
         <?= icon('check') ?>
@@ -40,11 +54,11 @@ $tier = $dealer['tier'] ?? null;
       </div>
     <?php endif; ?>
 
-    <div class="stat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0">
+    <div class="stat-grid" style="margin:20px 0">
       <div class="card card-body">
         <span class="small muted">Pricing tier</span>
-        <strong style="font-size:1.4rem"><?= $tier ? e($tier['name']) : ($status === 'approved' ? 'Assigned by Thunder Mounts' : 'Pending approval') ?></strong>
-        <?php if ($tier): ?><span class="small muted"><?= e(rtrim(rtrim(number_format((float) $tier['discount_percent'], 2, '.', ''), '0'), '.')) ?>% trade discount</span><?php endif; ?>
+        <strong style="font-size:1.4rem"><?= $tier ? e($tier['name']) : ($status === 'approved' ? 'Assigned by Thunder Mounts' : ($status === 'inactive' ? 'Inactive' : 'Pending approval')) ?></strong>
+        <?php if ($tier && $status === 'approved'): ?><span class="small muted"><?= e(rtrim(rtrim(number_format((float) $tier['discount_percent'], 2, '.', ''), '0'), '.')) ?>% trade discount</span><?php endif; ?>
       </div>
       <div class="card card-body">
         <span class="small muted">Trade orders</span>
@@ -58,10 +72,10 @@ $tier = $dealer['tier'] ?? null;
       </div>
     </div>
 
-    <div class="grid" style="grid-template-columns:1.5fr 1fr;gap:20px;align-items:start">
+    <div class="dealer-layout">
       <div class="card">
         <div class="card-head"><h2 style="font-size:1.05rem;margin:0">Recent dealer orders</h2><a class="small bold" href="<?= url('/dealer/orders') ?>">All orders</a></div>
-        <?php if ($status !== 'approved'): ?>
+        <?php if (!in_array($status, ['approved', 'inactive'], true)): ?>
           <div class="empty"><?= icon('lock') ?><h4>Ordering unlocks on approval</h4><p class="small">Once approved, your tier pricing and trade order history appear here.</p></div>
         <?php elseif ($orders === []): ?>
           <div class="empty"><?= icon('package') ?><h4>No trade orders yet</h4><p class="small">Your orders will appear here after your first dealer purchase.</p><a class="btn btn-primary btn-sm" href="<?= url('/shop') ?>">Shop products</a></div>

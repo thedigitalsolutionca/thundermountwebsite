@@ -20,8 +20,15 @@ final class UploadService
         'image/webp' => 'webp',
     ];
 
+    private const VIDEO_TYPES = [
+        'video/mp4' => 'mp4',
+        'video/webm' => 'webm',
+        'video/quicktime' => 'mov',
+    ];
+
     private const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
     private const DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+    private const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
     public function image(?array $file, string $folder = 'products', int $maxWidth = 1800): array
     {
@@ -82,6 +89,38 @@ final class UploadService
             return ['ok' => false, 'error' => 'The file could not be saved. Check folder permissions.', 'path' => null];
         }
         return ['ok' => true, 'error' => null, 'path' => '/uploads/' . $relativeDir . '/' . $name];
+    }
+
+    public function video(?array $file, string $folder = 'gallery'): array
+    {
+        $check = $this->inspect($file, self::VIDEO_MAX_BYTES);
+        if (!$check['ok']) {
+            return $check;
+        }
+        $mime = $this->mime($check['tmp']);
+        $clientExt = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+        $ext = self::VIDEO_TYPES[$mime] ?? null;
+        if ($ext === null && $mime === 'video/x-matroska' && $clientExt === 'webm') {
+            $ext = 'webm';
+        }
+        if ($ext === null) {
+            return ['ok' => false, 'error' => 'Upload an MP4 or WebM video file (up to 50 MB).', 'path' => null];
+        }
+
+        $relativeDir = trim($folder, '/') . '/' . date('Y/m');
+        $targetDir = rtrim((string) Config::get('uploads.path'), '/') . '/' . $relativeDir;
+        $this->ensureDir($targetDir);
+        $name = $this->randomName() . '.' . $ext;
+        $target = $targetDir . '/' . $name;
+        if (!@move_uploaded_file($check['tmp'], $target)) {
+            @unlink($check['tmp']);
+            return ['ok' => false, 'error' => 'The video could not be saved. Check folder permissions.', 'path' => null];
+        }
+        return [
+            'ok' => true,
+            'error' => null,
+            'path' => '/uploads/' . $relativeDir . '/' . $name,
+        ];
     }
 
     public function delete(?string $path): void

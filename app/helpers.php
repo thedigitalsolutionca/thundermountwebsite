@@ -280,3 +280,31 @@ if (!function_exists('icon')) {
         return \App\Core\Icons::svg($name, $class);
     }
 }
+
+if (!function_exists('dealer_program_enabled')) {
+    function dealer_program_enabled(): bool
+    {
+        return \App\Services\DealerService::isProgramEnabled();
+    }
+}
+
+if (!function_exists('dealer_pages_enabled')) {
+    function dealer_pages_enabled(): bool
+    {
+        return \App\Services\DealerService::arePagesEnabled();
+    }
+}
+
+if (!function_exists('dealer_applications_enabled')) {
+    function dealer_applications_enabled(): bool
+    {
+        return \App\Services\DealerService::areApplicationsEnabled();
+    }
+}
+
+if (!function_exists('dealer_pricing_enabled')) {
+    function dealer_pricing_enabled(): bool
+    {
+        return \App\Services\DealerService::isPricingEnabled();
+    }
+}

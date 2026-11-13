@@ -359,6 +359,24 @@ CREATE TABLE IF NOT EXISTS pages (
   UNIQUE (slug)
 ) ;
 
+CREATE TABLE IF NOT EXISTS gallery_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  media_type TEXT NOT NULL DEFAULT 'image',
+  video_source VARCHAR(20) NOT NULL DEFAULT '',
+  title VARCHAR(190) NOT NULL,
+  caption VARCHAR(500) NOT NULL DEFAULT '',
+  category VARCHAR(80) NOT NULL DEFAULT 'Installations',
+  media_path VARCHAR(500) NOT NULL,
+  embed_url VARCHAR(500) NOT NULL DEFAULT '',
+  poster_path VARCHAR(500) NOT NULL DEFAULT '',
+  alt_text VARCHAR(255) NOT NULL DEFAULT '',
+  sort_order INT NOT NULL DEFAULT 0,
+  is_featured INTEGER(1) NOT NULL DEFAULT 0,
+  is_active INTEGER(1) NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+) ;
+
 CREATE TABLE IF NOT EXISTS contact_messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name VARCHAR(120) NOT NULL,

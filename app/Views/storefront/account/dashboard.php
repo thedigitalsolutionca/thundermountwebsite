@@ -17,19 +17,21 @@ $user = auth();
           <a class="btn btn-primary" href="<?= url('/shop') ?>">Shop products</a>
         </div>
 
-        <?php if ($dealer && $dealer['status'] === 'pending'): ?>
-          <div class="notice notice-warn">
-            <?= icon('clock') ?>
-            <div><strong>Dealer application under review.</strong> We will email you when your trade account is approved. <a href="<?= url('/dealer/account') ?>" class="bold">View application</a></div>
-          </div>
-        <?php elseif ($dealer && $dealer['status'] === 'approved'): ?>
-          <div class="notice notice-success">
-            <?= icon('check') ?>
-            <div><strong>Approved dealer.</strong> Your dealer pricing is applied automatically while signed in. <a href="<?= url('/shop') ?>" class="bold">Shop with dealer pricing</a></div>
-          </div>
+        <?php if (dealer_program_enabled()): ?>
+          <?php if ($dealer && $dealer['status'] === 'pending'): ?>
+            <div class="notice notice-warn">
+              <?= icon('clock') ?>
+              <div><strong>Dealer application under review.</strong> We will email you when your trade account is approved. <a href="<?= url('/dealer/account') ?>" class="bold">View application</a></div>
+            </div>
+          <?php elseif ($dealer && $dealer['status'] === 'approved' && dealer_pricing_enabled()): ?>
+            <div class="notice notice-success">
+              <?= icon('check') ?>
+              <div><strong>Approved dealer.</strong> Your dealer pricing is applied automatically while signed in. <a href="<?= url('/shop') ?>" class="bold">Shop with dealer pricing</a></div>
+            </div>
+          <?php endif; ?>
         <?php endif; ?>
 
-        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+        <div class="stat-grid">
           <div class="card card-body">
             <span class="small muted">Orders placed</span>
             <strong style="font-size:1.7rem"><?= (int) $orderCount ?></strong>

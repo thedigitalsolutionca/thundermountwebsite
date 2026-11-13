@@ -31,4 +31,31 @@ final class Logger
     {
         self::write('info', $message, $context);
     }
+
+    public static function warning(string $message, array $context = []): void
+    {
+        self::write('warning', $message, $context);
+    }
+
+    public static function activity(
+        ?int $adminId,
+        string $action,
+        string $entityType = '',
+        string $entityId = '',
+        string $meta = ''
+    ): void {
+        try {
+            Database::insert('admin_activity', [
+                'user_id' => $adminId,
+                'action' => mb_substr($action, 0, 80),
+                'entity_type' => mb_substr($entityType, 0, 60),
+                'entity_id' => mb_substr($entityId, 0, 60),
+                'meta' => mb_substr($meta, 0, 255),
+                'ip' => Request::ip(),
+                'created_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            self::write('warning', 'Activity log insert skipped', ['action' => $action, 'error' => $e->getMessage()]);
+        }
+    }
 }

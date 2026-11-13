@@ -807,7 +807,12 @@ HTML,
         ['mail.from_address', 'no-reply@thundermounts.com', 'mail'],
 
         ['reviews.auto_approve', '0', 'reviews'],
+        ['dealer.enabled', '1', 'dealer'],
+        ['dealer.pages_enabled', '1', 'dealer'],
+        ['dealer.applications_enabled', '1', 'dealer'],
+        ['dealer.pricing_enabled', '1', 'dealer'],
         ['dealer.auto_approve', '0', 'dealer'],
+        ['gallery.seeded', '1', 'gallery'],
         ['inventory.low_stock_threshold', '5', 'inventory'],
     ],
 ];

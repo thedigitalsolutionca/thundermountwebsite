@@ -1,15 +1,30 @@
 <?php
 use App\Core\Csrf;
 use App\Core\Money;
-$isApproved = $dealer['status'] === 'approved';
+$status = $dealer['status'];
+$isApproved = $status === 'approved';
+$isInactive = $status === 'inactive';
 ?>
 <div class="admin-head">
   <div>
     <h2><?= e($dealer['company']) ?></h2>
-    <p>Application #<?= (int) $dealer['id'] ?> · <?= e($dealer['business_type']) ?> · <span class="badge <?= $isApproved ? 'badge-green' : ($dealer['status'] === 'rejected' ? 'badge-red' : 'badge-amber') ?>"><?= e(ucfirst($dealer['status'])) ?></span></p>
+    <p>Application #<?= (int) $dealer['id'] ?> · <?= e($dealer['business_type']) ?> · <span class="badge <?= e(badge_class($status)) ?>"><?= e(ucfirst($status)) ?></span></p>
   </div>
-  <a class="btn btn-outline btn-sm" href="<?= url('/admin/dealers') ?>">Back</a>
+  <div class="flex wrap" style="gap:8px">
+    <a class="btn btn-ghost btn-sm" href="<?= url('/admin/settings?tab=dealer') ?>"><?= icon('settings') ?> Program settings</a>
+    <a class="btn btn-outline btn-sm" href="<?= url('/admin/dealers') ?>">Back</a>
+  </div>
 </div>
+
+<?php if (!dealer_program_enabled()): ?>
+  <div class="admin-alert">
+    <?= icon('bell') ?>
+    <div>
+      <strong>The Dealer Program is currently closed store-wide.</strong>
+      <p>Dealer status and tier changes saved here are stored in the database and will take effect if you reopen the Dealer Program in <a href="<?= url('/admin/settings?tab=dealer') ?>" class="bold">Settings → Dealer Program</a>.</p>
+    </div>
+  </div>
+<?php endif; ?>
 
 <div class="admin-grid-2" style="grid-template-columns:1.5fr 1fr;align-items:start">
   <div class="stack">
@@ -57,7 +72,71 @@ $isApproved = $dealer['status'] === 'approved';
   </div>
 
   <div class="stack">
-    <?php if (!$isApproved): ?>
+    <?php if ($isApproved): ?>
+      <div class="admin-card">
+        <div class="admin-card-head"><div><h3>Approved dealer</h3></div><span class="badge badge-green">Active</span></div>
+        <div class="admin-card-body small">
+          <p style="margin:0 0 4px"><strong>Tier:</strong> <?= !empty($dealer['tier']) ? e($dealer['tier']['name']) . ' (' . e(rtrim(rtrim(number_format((float) $dealer['tier']['discount_percent'], 2, '.', ''), '0'), '.')) . '%)' : 'Not assigned' ?></p>
+          <p style="margin:0 0 10px"><strong>Approved:</strong> <?= $dealer['reviewed_at'] ? e(fmt_datetime($dealer['reviewed_at'])) : '—' ?></p>
+          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/approve') ?>" method="post">
+            <?= csrf_field() ?>
+            <div class="field"><label for="tier_id">Change tier</label>
+              <select class="select" id="tier_id" name="tier_id">
+                <?php foreach ($tiers as $tier): ?>
+                  <option value="<?= (int) $tier['id'] ?>"<?= selected((string) $tier['id'], (string) $dealer['tier_id']) ?>><?= e($tier['name']) ?> — <?= e(rtrim(rtrim(number_format((float) $tier['discount_percent'], 2, '.', ''), '0'), '.')) ?>%</option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <button class="btn btn-dark btn-sm" type="submit" <?= $tiers === [] ? 'disabled' : '' ?>>Update tier</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-head"><div><h3>Deactivate dealer</h3><span>Preserves tier &amp; order history</span></div></div>
+        <div class="admin-card-body">
+          <p class="tiny muted" style="margin:0 0 10px">Turns off trade pricing and dealer-only coupons for this account while keeping their customer login, saved tier and historical orders intact.</p>
+          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/deactivate') ?>" method="post" data-confirm="Deactivate dealer privileges for <?= e($dealer['company']) ?>?">
+            <?= csrf_field() ?>
+            <div class="field"><label for="deactivate_note">Internal note <span class="muted">(optional)</span></label><textarea class="textarea" id="deactivate_note" name="note" rows="2" placeholder="e.g. Account closed / paused for season"></textarea></div>
+            <button class="btn btn-outline btn-sm btn-block" type="submit">Deactivate dealer account</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-head"><div><h3>Revoke &amp; notify</h3></div></div>
+        <div class="admin-card-body">
+          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/reject') ?>" method="post" data-confirm="Revoke this dealer's approval and send a status email?">
+            <?= csrf_field() ?>
+            <div class="field"><label for="reject_note">Reason <span class="muted">(sent to dealer)</span></label><textarea class="textarea" id="reject_note" name="note" rows="2" required></textarea></div>
+            <button class="btn btn-danger btn-sm btn-block" type="submit">Revoke approval</button>
+          </form>
+        </div>
+      </div>
+
+    <?php elseif ($isInactive): ?>
+      <div class="admin-card">
+        <div class="admin-card-head"><div><h3>Inactive dealer</h3></div><span class="badge badge-gray">Inactive</span></div>
+        <div class="admin-card-body small">
+          <p class="muted" style="margin:0 0 10px">This trade account is currently deactivated. Their customer login and historical orders remain intact.</p>
+          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/reactivate') ?>" method="post">
+            <?= csrf_field() ?>
+            <div class="field"><label for="tier_id">Pricing tier on reactivation</label>
+              <select class="select" id="tier_id" name="tier_id">
+                <option value="">Choose a tier</option>
+                <?php foreach ($tiers as $tier): ?>
+                  <option value="<?= (int) $tier['id'] ?>"<?= selected((string) $tier['id'], (string) $dealer['tier_id']) ?>><?= e($tier['name']) ?> — <?= e(rtrim(rtrim(number_format((float) $tier['discount_percent'], 2, '.', ''), '0'), '.')) ?>%</option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="field"><label for="reactivate_note">Internal note <span class="muted">(optional)</span></label><textarea class="textarea" id="reactivate_note" name="note" rows="2"></textarea></div>
+            <button class="btn btn-primary btn-block" type="submit">Reactivate dealer account</button>
+          </form>
+        </div>
+      </div>
+
+    <?php else: ?>
       <div class="admin-card">
         <div class="admin-card-head"><div><h3>Approve dealer</h3></div></div>
         <div class="admin-card-body">
@@ -77,6 +156,7 @@ $isApproved = $dealer['status'] === 'approved';
           </form>
         </div>
       </div>
+      <?php if ($status !== 'rejected'): ?>
       <div class="admin-card">
         <div class="admin-card-head"><div><h3>Not approved</h3></div></div>
         <div class="admin-card-body">
@@ -87,36 +167,9 @@ $isApproved = $dealer['status'] === 'approved';
           </form>
         </div>
       </div>
-    <?php else: ?>
-      <div class="admin-card">
-        <div class="admin-card-head"><div><h3>Approved</h3></div><span class="badge badge-green">Active</span></div>
-        <div class="admin-card-body small">
-          <p style="margin:0 0 4px"><strong>Tier:</strong> <?= !empty($dealer['tier']) ? e($dealer['tier']['name']) . ' (' . e(rtrim(rtrim(number_format((float) $dealer['tier']['discount_percent'], 2, '.', ''), '0'), '.')) . '%)' : 'Not assigned' ?></p>
-          <p style="margin:0 0 10px"><strong>Approved:</strong> <?= $dealer['reviewed_at'] ? e(fmt_datetime($dealer['reviewed_at'])) : '—' ?></p>
-          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/approve') ?>" method="post">
-            <?= csrf_field() ?>
-            <div class="field"><label for="tier_id">Change tier</label>
-              <select class="select" id="tier_id" name="tier_id">
-                <?php foreach ($tiers as $tier): ?>
-                  <option value="<?= (int) $tier['id'] ?>"<?= selected((string) $tier['id'], (string) $dealer['tier_id']) ?>><?= e($tier['name']) ?> — <?= e(rtrim(rtrim(number_format((float) $tier['discount_percent'], 2, '.', ''), '0'), '.')) ?>%</option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <button class="btn btn-dark btn-sm" type="submit" <?= $tiers === [] ? 'disabled' : '' ?>>Update tier</button>
-          </form>
-        </div>
-      </div>
-      <div class="admin-card">
-        <div class="admin-card-head"><div><h3>Place on hold</h3></div></div>
-        <div class="admin-card-body">
-          <form action="<?= url('/admin/dealers/' . (int) $dealer['id'] . '/reject') ?>" method="post" data-confirm="Remove this dealer's approved status?">
-            <?= csrf_field() ?>
-            <div class="field"><label for="reject_note">Reason</label><textarea class="textarea" id="reject_note" name="note" rows="2" required></textarea></div>
-            <button class="btn btn-danger btn-sm btn-block" type="submit">Revoke approval</button>
-          </form>
-        </div>
-      </div>
+      <?php endif; ?>
     <?php endif; ?>
+
     <?php if ($dealer['user_id']): ?>
       <div class="admin-card">
         <div class="admin-card-head"><div><h3>Login account</h3></div></div>

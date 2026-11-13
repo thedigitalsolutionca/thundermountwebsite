@@ -34,10 +34,12 @@ final class PageController
 
     public function contactForm(): string
     {
-        $user = Auth::user();
+        $dealerOn = \App\Services\DealerService::isProgramEnabled();
         return View::render('storefront/contact', [
             'pageTitle' => 'Contact Us',
-            'metaDescription' => 'Talk to Thunder Mounts about fitment, orders or dealer accounts. Call 805-338-6680 or email thunder@thundermounts.com.',
+            'metaDescription' => $dealerOn
+                ? 'Talk to Thunder Mounts about fitment, orders or dealer accounts. Call 805-338-6680 or email thunder@thundermounts.com.'
+                : 'Talk to Thunder Mounts about fitment, orders or custom quotes. Call 805-338-6680 or email thunder@thundermounts.com.',
             'prefillSubject' => (string) Request::query('subject', ''),
         ], 'layouts/storefront');
     }
@@ -73,7 +75,13 @@ final class PageController
     {
         $catalog = CatalogService::instance();
         $urls = [];
-        foreach ([['/', '1.0', 'weekly'], ['/shop', '0.9', 'daily'], ['/dealer-program', '0.7', 'monthly'], ['/contact', '0.6', 'monthly'], ['/order-lookup', '0.3', 'yearly']] as $entry) {
+        $coreEntries = [['/', '1.0', 'weekly'], ['/shop', '0.9', 'daily']];
+        if (\App\Services\DealerService::arePagesEnabled()) {
+            $coreEntries[] = ['/dealer-program', '0.7', 'monthly'];
+        }
+        $coreEntries[] = ['/contact', '0.6', 'monthly'];
+        $coreEntries[] = ['/order-lookup', '0.3', 'yearly'];
+        foreach ($coreEntries as $entry) {
             $urls[] = ['loc' => absolute_url($entry[0]), 'priority' => $entry[1], 'changefreq' => $entry[2], 'lastmod' => null];
         }
         foreach (['/about/inventor', '/portfolio', '/size-guide', '/resources/instructions', '/sales-sheet', '/blog', '/book-online', '/powder-coating', '/mission', '/benefits', '/installation-standard', '/french-porte', '/refer-friends'] as $path) {

@@ -64,6 +64,11 @@ final class Database
         return self::$driver === 'sqlite';
     }
 
+    public static function isMySql(): bool
+    {
+        return self::$driver !== 'sqlite';
+    }
+
     public static function select(string $sql, array $params = []): array
     {
         $stmt = self::pdo()->prepare($sql);

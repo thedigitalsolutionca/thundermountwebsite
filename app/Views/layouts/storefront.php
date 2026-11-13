@@ -22,7 +22,14 @@ $canonical = $canonical ?? absolute_url(current_path());
 $ogImage = absolute_url($ogImage ?? (string) setting('seo.og_image', '/assets/img/hero-garage.jpg'));
 $user = $currentUser ?? Auth::user();
 $announcement = setting('store.announcement', '');
+$announcementLink = (string) setting('store.announcement_link', '');
 $announcementEnabled = (string) setting('store.announcement_enabled', '1') === '1';
+if ((!dealer_program_enabled() || !dealer_applications_enabled()) && ($announcement !== '' || $announcementLink !== '')) {
+    if (stripos($announcement, 'dealer') !== false || str_starts_with($announcementLink, '/dealer')) {
+        $announcement = 'Engineered garage door & opener mounting systems — built in Simi Valley, CA.';
+        $announcementLink = '/shop';
+    }
+}
 $resourceLinks = [
     '/benefits' => 'Thunder Mounts Benefits',
     '/resources/instructions' => 'Instructions',
@@ -31,6 +38,9 @@ $resourceLinks = [
     '/about/inventor' => 'Inventor Bio',
     '/blog' => 'Blog',
 ];
+if (dealer_pages_enabled()) {
+    $resourceLinks['/dealer-program'] = 'Dealer Program';
+}
 $mainLinks = ['/' => 'Home', '/shop' => 'Shop', '/page/about' => 'About', '/portfolio' => 'Portfolio', '/powder-coating' => 'Powder Coating'];
 $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) || is_active('/blog') !== '';
 ?><!DOCTYPE html>
@@ -96,7 +106,7 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
     <div class="announce" id="announce-bar">
       <div class="container">
         <?= e($announcement) ?>
-        <?php if (setting('store.announcement_link')): ?><a href="<?= e(url((string) setting('store.announcement_link'))) ?>">Learn more</a><?php endif; ?>
+        <?php if ($announcementLink !== ''): ?><a href="<?= e(url($announcementLink)) ?>">Learn more</a><?php endif; ?>
         <button class="announce-close" type="button" aria-label="Dismiss announcement" data-announce-close>&times;</button>
       </div>
     </div>
@@ -110,7 +120,8 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
 
       <nav class="nav-main" aria-label="Main navigation">
         <?php foreach ($mainLinks as $path => $label): ?>
-          <a href="<?= url($path) ?>" class="<?= current_path() === $path ? 'active' : '' ?>" <?= current_path() === $path ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
+          <?php $navActive = current_path() === $path || ($path === '/portfolio' && current_path() === '/gallery'); ?>
+          <a href="<?= url($path) ?>" class="<?= $navActive ? 'active' : '' ?>" <?= $navActive ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
         <?php endforeach; ?>
         <div class="has-drop">
           <button class="nav-resource-toggle <?= $resourceSection ? 'active' : '' ?>" type="button" aria-expanded="false" aria-controls="resource-menu" data-resource-toggle>Resources <span aria-hidden="true">▾</span></button>
@@ -157,7 +168,7 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
         <div class="newsletter">
           <div>
             <h2 style="color:#fff;margin-bottom:6px">Product news and installer resources.</h2>
-            <p style="color:#C9CED4;margin:0">Occasional updates about new products, installation guidance and the dealer program. No spam.</p>
+            <p style="color:#C9CED4;margin:0">Occasional updates about new products, installation guidance<?= dealer_pages_enabled() ? ' and the dealer program' : ' and project highlights' ?>. No spam.</p>
           </div>
           <form data-newsletter-form novalidate>
             <label class="sr-only" for="newsletter-email">Email address</label>
@@ -183,8 +194,9 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
         <div>
           <h4>Explore</h4>
           <a href="<?= url('/shop') ?>">Shop products</a>
-          <a href="<?= url('/portfolio') ?>">Portfolio</a>
+          <a href="<?= url('/portfolio') ?>">Portfolio &amp; Gallery</a>
           <a href="<?= url('/powder-coating') ?>">Powder coating</a>
+          <?php if (dealer_pages_enabled()): ?><a href="<?= url('/dealer-program') ?>">Dealer program</a><?php endif; ?>
           <a href="<?= url('/page/about') ?>">About us</a>
         </div>
         <div>
@@ -193,6 +205,7 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
           <a href="<?= url('/resources/instructions') ?>">Instructions</a>
           <a href="<?= url('/size-guide') ?>">Sizing guide</a>
           <a href="<?= url('/order-lookup') ?>">Track an order</a>
+          <a href="<?= url('/page/returns') ?>">Returns &amp; warranty</a>
         </div>
 
       </div>
@@ -281,14 +294,20 @@ $resourceSection = in_array(current_path(), array_keys($resourceLinks), true) ||
     </div>
   </div>
 
-  <!-- Image lightbox -->
+  <!-- Media lightbox (images + videos + embeds) -->
   <div class="lightbox-wrap" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
     <div class="lightbox-backdrop" data-close-lightbox></div>
     <figure class="lightbox">
-      <button class="close-x lightbox-close" type="button" data-close-lightbox aria-label="Close image viewer">&times;</button>
-      <button class="lightbox-nav lightbox-prev" type="button" data-lightbox-prev aria-label="Previous image"><?= icon('arrow-left') ?></button>
-      <img id="lightbox-image" class="lightbox-image" alt="">
-      <button class="lightbox-nav lightbox-next" type="button" data-lightbox-next aria-label="Next image"><?= icon('arrow-right') ?></button>
+      <button class="close-x lightbox-close" type="button" data-close-lightbox aria-label="Close media viewer">&times;</button>
+      <button class="lightbox-nav lightbox-prev" type="button" data-lightbox-prev aria-label="Previous item"><?= icon('arrow-left') ?></button>
+      <div class="lightbox-stage" data-lightbox-stage>
+        <img id="lightbox-image" class="lightbox-image" alt="">
+        <video id="lightbox-video" class="lightbox-video" controls playsinline preload="metadata" hidden></video>
+        <div id="lightbox-embed-wrap" class="lightbox-embed-wrap" hidden>
+          <iframe id="lightbox-embed" class="lightbox-embed" title="Video player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
+        </div>
+      </div>
+      <button class="lightbox-nav lightbox-next" type="button" data-lightbox-next aria-label="Next item"><?= icon('arrow-right') ?></button>
       <figcaption class="lightbox-caption">
         <span class="lightbox-counter" data-lightbox-counter></span>
         <span class="lightbox-copy">
