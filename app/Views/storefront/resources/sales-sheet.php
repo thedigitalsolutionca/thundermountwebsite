@@ -30,6 +30,10 @@
       </div>
       <div class="sheet-disclaimer">Use the model-specific instructions and door/opener manufacturer guidance. A qualified installer should assess the structure and perform work on high-tension door components.</div>
     </div>
-    <div class="flex wrap print-actions mt-3"><a class="btn btn-primary" href="<?= url('/shop') ?>">View current products</a><a class="btn btn-outline" href="<?= url('/dealer-program') ?>">Explore dealer program</a><a class="btn btn-ghost" href="<?= url('/contact') ?>">Ask a question</a></div>
+    <div class="flex wrap print-actions mt-3">
+      <a class="btn btn-primary" href="<?= url('/shop') ?>">View current products</a>
+      <?php if (dealer_pages_enabled()): ?><a class="btn btn-outline" href="<?= url('/dealer-program') ?>">Explore dealer program</a><?php endif; ?>
+      <a class="btn btn-ghost" href="<?= url('/contact') ?>">Ask a question</a>
+    </div>
   </div>
 </section>

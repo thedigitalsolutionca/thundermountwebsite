@@ -25,7 +25,7 @@ final class SettingsController
     public function index(): string
     {
         $tab = (string) Request::query('tab', 'store');
-        $allowedTabs = ['store', 'seo', 'checkout', 'paypal', 'mail', 'preferences', 'chat', 'users'];
+        $allowedTabs = ['store', 'dealer', 'seo', 'checkout', 'paypal', 'mail', 'preferences', 'chat', 'users'];
         if (!in_array($tab, $allowedTabs, true)) {
             $tab = 'store';
         }
@@ -34,6 +34,7 @@ final class SettingsController
             'tab' => $tab,
             'settings' => Settings::all(),
             'admins' => $tab === 'users' ? Database::select("SELECT * FROM users WHERE role = 'admin' ORDER BY id") : [],
+            'dealerCounts' => $tab === 'dealer' ? (new \App\Services\DealerService())->counts() : [],
             'paypalConfigured' => trim((string) Settings::get('encrypted.paypal.client_id', '')) !== '' && trim((string) Settings::get('encrypted.paypal.client_secret', '')) !== '',
             'webhookConfigured' => trim((string) Settings::get('encrypted.paypal.webhook_id', '')) !== '',
             'mailConfigured' => trim((string) Settings::get('encrypted.mail_host', '')) !== '',
@@ -41,6 +42,17 @@ final class SettingsController
     }
 
     private const GROUPS = [
+        'dealer' => [
+            'text' => [],
+            'bool' => [
+                'dealer.enabled',
+                'dealer.pages_enabled',
+                'dealer.applications_enabled',
+                'dealer.pricing_enabled',
+                'dealer.auto_approve',
+            ],
+            'email' => [],
+        ],
         'chat' => [
             'text' => ['chat.openai_model', 'chat.gemini_model', 'chat.groq_model'],
             'bool' => ['chat.enabled'],

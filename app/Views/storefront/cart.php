@@ -44,7 +44,7 @@ $checkoutReady = $readiness['ready'];
                       <form action="<?= url('/cart/update') ?>" method="post" class="qty-form" data-cart-update>
                         <?= csrf_field() ?>
                         <input type="hidden" name="item_id" value="<?= (int) $item['item_id'] ?>">
-                        <div class="qty qty-sm">
+                        <div class="qty qty-sm" data-qty>
                           <button type="button" data-qty-dec aria-label="Decrease quantity for <?= e($item['product']['name']) ?>">−</button>
                           <label class="sr-only" for="qty-<?= (int) $item['item_id'] ?>">Quantity</label>
                           <input id="qty-<?= (int) $item['item_id'] ?>" type="number" name="qty" value="<?= (int) $item['qty'] ?>" min="0" max="99" inputmode="numeric" data-auto-submit-qty>

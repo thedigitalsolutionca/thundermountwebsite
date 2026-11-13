@@ -21,7 +21,10 @@ final class AuthController
             Response::redirect(url(Auth::isAdmin() ? '/admin' : '/account'));
         }
         $next = (string) Request::query('next', '');
-        if ($next !== '' && !str_starts_with($next, '/')) {
+        if ($next !== '' && (!str_starts_with($next, '/') || str_starts_with($next, '//'))) {
+            $next = '';
+        }
+        if (str_starts_with($next, '/dealer') && !\App\Services\DealerService::isProgramEnabled()) {
             $next = '';
         }
         return View::render('storefront/auth/login', [
@@ -38,7 +41,10 @@ final class AuthController
         $email = (string) Request::input('email', '');
         $password = (string) Request::post('password', '');
         $next = (string) Request::post('next', '');
-        if ($next === '' || !str_starts_with($next, '/')) {
+        if ($next === '' || !str_starts_with($next, '/') || str_starts_with($next, '//')) {
+            $next = '/account';
+        }
+        if (str_starts_with($next, '/dealer') && !\App\Services\DealerService::isProgramEnabled()) {
             $next = '/account';
         }
 

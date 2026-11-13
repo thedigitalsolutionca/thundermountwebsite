@@ -252,6 +252,13 @@
       menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       syncScrollLock();
     });
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 1150 && mobileNav.classList.contains('open')) {
+        mobileNav.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        syncScrollLock();
+      }
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -524,11 +531,13 @@
   });
 
   // ---------------------------------------------------------------------
-  // Image lightbox — click-to-zoom for portfolio photos and the product gallery.
-  // Any element with [data-lightbox="group"] opens the shared dialog; siblings
-  // with the same group value navigate with arrows or ← / → keys.
+  // Media lightbox — click-to-zoom/play for portfolio photos, videos, embeds
+  // and the product gallery. Siblings in the same group navigate with arrows.
   // ---------------------------------------------------------------------
   var lightboxImage = lightbox ? lightbox.querySelector('#lightbox-image') : null;
+  var lightboxVideo = lightbox ? lightbox.querySelector('#lightbox-video') : null;
+  var lightboxEmbedWrap = lightbox ? lightbox.querySelector('#lightbox-embed-wrap') : null;
+  var lightboxEmbed = lightbox ? lightbox.querySelector('#lightbox-embed') : null;
   var lightboxFigure = lightbox ? lightbox.querySelector('.lightbox') : null;
   var lightboxCounter = lightbox ? lightbox.querySelector('[data-lightbox-counter]') : null;
   var lightboxTitle = lightbox ? lightbox.querySelector('[data-lightbox-title]') : null;
@@ -537,9 +546,25 @@
   var lightboxIndex = 0;
   var lightboxReturnFocus = null;
 
+  function stopLightboxMedia() {
+    if (lightboxVideo) {
+      try { lightboxVideo.pause(); } catch (e) {}
+      lightboxVideo.removeAttribute('src');
+      lightboxVideo.removeAttribute('poster');
+      try { lightboxVideo.load(); } catch (e) {}
+      lightboxVideo.hidden = true;
+    }
+    if (lightboxEmbed) {
+      lightboxEmbed.setAttribute('src', 'about:blank');
+    }
+    if (lightboxEmbedWrap) {
+      lightboxEmbedWrap.hidden = true;
+    }
+  }
+
   function lightboxItemsFor(group) {
     return $$('[data-lightbox]').filter(function (node) {
-      return (node.getAttribute('data-lightbox') || '') === group;
+      return (node.getAttribute('data-lightbox') || '') === group && !node.closest('[hidden]');
     });
   }
 
@@ -560,11 +585,36 @@
     if (!node || !lightboxImage) {
       return;
     }
+    stopLightboxMedia();
+    var mediaType = node.getAttribute('data-lightbox-type') || 'image';
+    var src = lightboxSource(node);
     var img = lightboxImageFor(node);
-    var title = node.getAttribute('data-lightbox-title') || (img ? img.alt : '') || 'Photo';
+    var title = node.getAttribute('data-lightbox-title') || (img ? img.alt : '') || (mediaType === 'image' ? 'Photo' : 'Video');
     var detail = node.getAttribute('data-lightbox-detail') || '';
-    lightboxImage.src = lightboxSource(node);
-    lightboxImage.alt = img ? (img.alt || title) : title;
+
+    if (mediaType === 'video' && lightboxVideo) {
+      lightboxImage.hidden = true;
+      lightboxVideo.hidden = false;
+      var poster = node.getAttribute('data-lightbox-poster') || '';
+      if (poster) {
+        lightboxVideo.setAttribute('poster', poster);
+      }
+      lightboxVideo.src = src;
+      var playPromise = lightboxVideo.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(function () {});
+      }
+    } else if (mediaType === 'embed' && lightboxEmbed && lightboxEmbedWrap) {
+      lightboxImage.hidden = true;
+      lightboxEmbedWrap.hidden = false;
+      var embedSrc = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'autoplay=1';
+      lightboxEmbed.setAttribute('src', embedSrc);
+    } else {
+      lightboxImage.hidden = false;
+      lightboxImage.src = src;
+      lightboxImage.alt = img ? (img.alt || title) : title;
+    }
+
     if (lightboxTitle) {
       lightboxTitle.textContent = title;
     }
@@ -577,6 +627,7 @@
     }
     if (lightboxFigure) {
       lightboxFigure.classList.toggle('single', lightboxItems.length < 2);
+      lightboxFigure.classList.toggle('is-video-mode', mediaType === 'video' || mediaType === 'embed');
     }
   }
 
@@ -604,6 +655,7 @@
     if (!lightbox || !lightbox.classList.contains('open')) {
       return;
     }
+    stopLightboxMedia();
     lightbox.classList.remove('open');
     lightbox.setAttribute('aria-hidden', 'true');
     syncScrollLock();
@@ -816,6 +868,86 @@
       var open = filters.classList.toggle('open');
       filtersToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
+  }
+
+  // Portfolio & Gallery instant filter tabs + category chips
+  var portfolioGrid = $('[data-portfolio-grid]');
+  var portfolioToolbar = $('[data-portfolio-toolbar]');
+  if (portfolioGrid && portfolioToolbar) {
+    var portfolioEmpty = $('[data-portfolio-empty]');
+    var activeType = 'all';
+    var activeCat = 'all';
+    var initialTab = $('[data-portfolio-filter].active', portfolioToolbar);
+    if (initialTab) {
+      activeType = initialTab.getAttribute('data-portfolio-filter') || 'all';
+    }
+
+    function applyPortfolioFilter() {
+      var tiles = $$('.portfolio-tile', portfolioGrid);
+      var visibleCount = 0;
+      tiles.forEach(function (tile) {
+        var tType = tile.getAttribute('data-media-type') || 'image';
+        var tCat = tile.getAttribute('data-media-category') || '';
+        var matchType = activeType === 'all' || tType === activeType;
+        var matchCat = activeCat === 'all' || tCat === activeCat;
+        var show = matchType && matchCat;
+        tile.hidden = !show;
+        if (show) {
+          visibleCount++;
+        }
+      });
+      if (portfolioEmpty) {
+        portfolioEmpty.hidden = visibleCount > 0;
+      }
+    }
+
+    $$('[data-portfolio-filter]', portfolioToolbar).forEach(function (tab) {
+      tab.addEventListener('click', function (event) {
+        event.preventDefault();
+        activeType = tab.getAttribute('data-portfolio-filter') || 'all';
+        $$('[data-portfolio-filter]', portfolioToolbar).forEach(function (other) {
+          var isCurrent = other === tab;
+          other.classList.toggle('active', isCurrent);
+          other.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+        });
+        applyPortfolioFilter();
+        if (window.history && window.history.replaceState) {
+          var q = activeType === 'image' ? '?type=photos' : (activeType === 'video' ? '?type=videos' : '');
+          window.history.replaceState(null, '', window.location.pathname + q);
+        }
+      });
+    });
+
+    $$('[data-portfolio-cat]', portfolioToolbar).forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        activeCat = chip.getAttribute('data-portfolio-cat') || 'all';
+        $$('[data-portfolio-cat]', portfolioToolbar).forEach(function (other) {
+          other.classList.toggle('active', other === chip);
+        });
+        applyPortfolioFilter();
+      });
+    });
+
+    var resetBtn = $('[data-portfolio-reset]');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        activeType = 'all';
+        activeCat = 'all';
+        $$('[data-portfolio-filter]', portfolioToolbar).forEach(function (other) {
+          var isAll = other.getAttribute('data-portfolio-filter') === 'all';
+          other.classList.toggle('active', isAll);
+          other.setAttribute('aria-selected', isAll ? 'true' : 'false');
+        });
+        $$('[data-portfolio-cat]', portfolioToolbar).forEach(function (other) {
+          other.classList.toggle('active', other.getAttribute('data-portfolio-cat') === 'all');
+        });
+        applyPortfolioFilter();
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+      });
+    }
   }
 
   $$('[data-newsletter-form]').forEach(function (form) {

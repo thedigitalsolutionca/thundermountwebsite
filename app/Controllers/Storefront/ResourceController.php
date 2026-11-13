@@ -37,9 +37,19 @@ final class ResourceController
 
     public function portfolio(): string
     {
-        return $this->render('portfolio', 'Installation Portfolio',
-            'See real Thunder Mounts track and opener mounting installations, including projects in Malibu.',
-            '/portfolio');
+        $gallery = new \App\Services\GalleryService();
+        $items = $gallery->publicItems();
+        return $this->render(
+            'portfolio',
+            'Portfolio & Gallery',
+            'See real Thunder Mounts photos and videos of track and opener mounting installations, including projects in Malibu.',
+            '/portfolio',
+            [
+                'items' => $items,
+                'galleryCategories' => $gallery->categories($items),
+                'activeFilter' => (string) Request::query('type', 'all'),
+            ]
+        );
     }
 
     public function sizeGuide(): string

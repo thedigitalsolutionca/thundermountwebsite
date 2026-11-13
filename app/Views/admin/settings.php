@@ -1,7 +1,7 @@
 <?php
 use App\Core\Csrf;
 $errs = errors();
-$tabs = ['store' => 'Store', 'seo' => 'SEO', 'checkout' => 'Checkout', 'paypal' => 'PayPal', 'mail' => 'Email', 'preferences' => 'Preferences', 'chat' => 'AI Assistant', 'users' => 'Admins'];
+$tabs = ['store' => 'Store', 'dealer' => 'Dealer Program', 'seo' => 'SEO', 'checkout' => 'Checkout', 'paypal' => 'PayPal', 'mail' => 'Email', 'preferences' => 'Preferences', 'chat' => 'AI Assistant', 'users' => 'Admins'];
 $get = static fn (string $key, string $default = '') => e((string) setting($key, $default));
 ?>
 <div class="admin-head">
@@ -46,14 +46,76 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
       <h4 style="margin:0 0 8px">Announcement bar</h4>
       <div class="field"><label for="announcement">Message</label><input class="input" id="announcement" name="settings[store.announcement]" value="<?= $get('store.announcement') ?>"></div>
       <div class="form-row">
-        <div class="field"><label for="announcement-link">Link</label><input class="input" id="announcement-link" name="settings[store.announcement_link]" value="<?= $get('store.announcement_link') ?>" placeholder="/dealer/apply"></div>
-        <div class="field" style="display:flex;align-items:flex-end;gap:16px">
+        <div class="field"><label for="announcement-link">Link</label><input class="input" id="announcement-link" name="settings[store.announcement_link]" value="<?= $get('store.announcement_link') ?>" placeholder="/shop"></div>
+        <div class="field field-checks-inline">
           <label class="check"><input type="checkbox" name="settings[store.announcement_enabled]" value="1" <?= setting('store.announcement_enabled', '1') === '1' ? 'checked' : '' ?>><span>Show announcement</span></label>
           <label class="check"><input type="checkbox" name="settings[store.newsletter_enabled]" value="1" <?= setting('store.newsletter_enabled', '1') === '1' ? 'checked' : '' ?>><span>Footer newsletter</span></label>
         </div>
       </div>
     </div>
     <div class="admin-save-row"><button class="btn btn-primary" type="submit">Save store settings</button></div>
+  </form>
+
+<?php elseif ($tab === 'dealer'): ?>
+  <?php $dCounts = $dealerCounts ?? ['approved' => 0, 'pending' => 0, 'inactive' => 0, 'rejected' => 0]; ?>
+  <form action="<?= url('/admin/settings') ?>" method="post" class="admin-card">
+    <?= csrf_field() ?>
+    <input type="hidden" name="group" value="dealer">
+    <div class="admin-card-head">
+      <div>
+        <h3>Dealer program &amp; trade access</h3>
+        <span>Close or reopen the dealer program, or fine-tune applications, public pages and trade pricing independently.</span>
+      </div>
+      <span class="badge <?= dealer_program_enabled() ? 'badge-green' : 'badge-red' ?>"><?= dealer_program_enabled() ? 'Program open' : 'Program closed' ?></span>
+    </div>
+    <div class="admin-card-body">
+      <div class="dealer-toggle-box">
+        <label class="check">
+          <input type="checkbox" name="settings[dealer.enabled]" value="1" <?= setting('dealer.enabled', '1') === '1' ? 'checked' : '' ?>>
+          <span><strong>Enable Dealer Program (master switch)</strong></span>
+        </label>
+        <p class="small muted" style="margin:6px 0 0 28px">
+          Uncheck this to close the entire dealer program across the storefront. All public dealer pages (<code>/dealer-program</code>, <code>/dealer/apply</code>, <code>/dealer/login</code>), navigation &amp; footer links, account sidebar links, dealer pricing, dealer-only discount codes, sitemap entries and AI assistant references will turn off immediately. Historical dealer records and past orders remain safely preserved.
+        </p>
+      </div>
+
+      <div class="divider"></div>
+      <h4 style="margin:0 0 10px">Granular controls <span class="small muted" style="font-weight:400">(active when the master switch above is enabled)</span></h4>
+
+      <label class="check">
+        <input type="checkbox" name="settings[dealer.pages_enabled]" value="1" <?= setting('dealer.pages_enabled', '1') === '1' ? 'checked' : '' ?>>
+        <span>Show public Dealer Program landing page &amp; storefront promotional links</span>
+      </label>
+      <p class="tiny muted" style="margin:2px 0 12px 28px">Controls <code>/dealer-program</code>, homepage trade cards, footer/resource menu links and sitemap inclusion. Turn off if you want invite-only or private trade accounts without advertising the program publicly.</p>
+
+      <label class="check">
+        <input type="checkbox" name="settings[dealer.applications_enabled]" value="1" <?= setting('dealer.applications_enabled', '1') === '1' ? 'checked' : '' ?>>
+        <span>Accept new online dealer applications (<code>/dealer/apply</code>)</span>
+      </label>
+      <p class="tiny muted" style="margin:2px 0 12px 28px">Turn off to pause new applications while allowing existing approved dealers to continue signing in and ordering.</p>
+
+      <label class="check">
+        <input type="checkbox" name="settings[dealer.pricing_enabled]" value="1" <?= setting('dealer.pricing_enabled', '1') === '1' ? 'checked' : '' ?>>
+        <span>Apply dealer tier pricing, fixed dealer prices &amp; dealer-only discount codes</span>
+      </label>
+      <p class="tiny muted" style="margin:2px 0 12px 28px">Turn off to temporarily charge standard store pricing on all orders without deactivating individual dealer accounts.</p>
+
+      <label class="check">
+        <input type="checkbox" name="settings[dealer.auto_approve]" value="1" <?= setting('dealer.auto_approve', '0') === '1' ? 'checked' : '' ?>>
+        <span>Auto-approve new dealer applications into the lowest active tier</span>
+      </label>
+      <p class="tiny muted" style="margin:2px 0 14px 28px">Leave unchecked (recommended) to review each business application manually before granting trade discounts.</p>
+
+      <div class="admin-note">
+        <strong>Current trade accounts:</strong>
+        <?= (int) ($dCounts['approved'] ?? 0) ?> approved ·
+        <?= (int) ($dCounts['pending'] ?? 0) ?> pending ·
+        <?= (int) ($dCounts['inactive'] ?? 0) ?> inactive ·
+        <?= (int) ($dCounts['rejected'] ?? 0) ?> not approved.
+        <a class="bold" href="<?= url('/admin/dealers') ?>" style="margin-left:8px">Manage dealers &amp; individual status →</a>
+      </div>
+    </div>
+    <div class="admin-save-row"><button class="btn btn-primary" type="submit">Save dealer program settings</button></div>
   </form>
 
 <?php elseif ($tab === 'seo'): ?>
@@ -190,7 +252,7 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
       <label class="check"><input type="checkbox" name="settings[reviews.auto_approve]" value="1" <?= setting('reviews.auto_approve', '0') === '1' ? 'checked' : '' ?>><span>Publish verified reviews immediately</span></label>
       <p class="tiny muted">Leave off to moderate every review before it appears.</p>
       <label class="check"><input type="checkbox" name="settings[dealer.auto_approve]" value="1" <?= setting('dealer.auto_approve', '0') === '1' ? 'checked' : '' ?>><span>Auto-approve dealer applications</span></label>
-      <p class="tiny muted">Not recommended — dealer pricing should be reviewed. This setting is recorded for future use.</p>
+      <p class="tiny muted">Not recommended — dealer pricing should be reviewed manually. Full dealer controls are in <a href="<?= url('/admin/settings?tab=dealer') ?>">Dealer Program settings</a>.</p>
       <div class="field" style="max-width:220px"><label for="low-stock">Default low-stock threshold</label><input class="input" id="low-stock" name="settings[inventory.low_stock_threshold]" value="<?= $get('inventory.low_stock_threshold', '5') ?>" inputmode="numeric"></div>
     </div>
     <div class="admin-save-row"><button class="btn btn-primary" type="submit">Save preferences</button></div>

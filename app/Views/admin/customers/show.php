@@ -78,7 +78,7 @@ use App\Core\Money;
           <a class="btn btn-outline btn-sm" href="<?= url('/admin/dealers') ?>">View dealer applications</a>
         <?php else: ?>
           <p style="margin:0 0 4px"><strong><?= e($dealer['company']) ?></strong></p>
-          <p style="margin:0 0 4px">Status: <span class="badge <?= $dealer['status'] === 'approved' ? 'badge-green' : ($dealer['status'] === 'rejected' ? 'badge-red' : 'badge-amber') ?>"><?= e(ucfirst($dealer['status'])) ?></span></p>
+          <p style="margin:0 0 4px">Status: <span class="badge <?= e(badge_class($dealer['status'])) ?>"><?= e(ucfirst($dealer['status'])) ?></span></p>
           <?php if (!empty($dealer['tier'])): ?><p style="margin:0 0 4px">Tier: <?= e($dealer['tier']['name']) ?> (<?= e(rtrim(rtrim(number_format((float) $dealer['tier']['discount_percent'], 2, '.', ''), '0'), '.')) ?>%)</p><?php endif; ?>
           <a class="btn btn-outline btn-sm" href="<?= url('/admin/dealers/' . (int) $dealer['id']) ?>">Open dealer record</a>
         <?php endif; ?>

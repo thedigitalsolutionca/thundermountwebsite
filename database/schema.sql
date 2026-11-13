@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS dealers (
   postcode VARCHAR(20) NOT NULL DEFAULT '',
   country CHAR(2) NOT NULL DEFAULT 'US',
   tier_id INT UNSIGNED NULL,
-  status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  status ENUM('pending','approved','rejected','inactive') NOT NULL DEFAULT 'pending',
   admin_notes TEXT NULL,
   applied_at DATETIME NOT NULL,
   reviewed_at DATETIME NULL,
@@ -400,6 +400,26 @@ CREATE TABLE IF NOT EXISTS pages (
   updated_at DATETIME NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_pages_slug (slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS gallery_items (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  media_type ENUM('image','video') NOT NULL DEFAULT 'image',
+  video_source VARCHAR(20) NOT NULL DEFAULT '',
+  title VARCHAR(190) NOT NULL,
+  caption VARCHAR(500) NOT NULL DEFAULT '',
+  category VARCHAR(80) NOT NULL DEFAULT 'Installations',
+  media_path VARCHAR(500) NOT NULL,
+  embed_url VARCHAR(500) NOT NULL DEFAULT '',
+  poster_path VARCHAR(500) NOT NULL DEFAULT '',
+  alt_text VARCHAR(255) NOT NULL DEFAULT '',
+  sort_order INT NOT NULL DEFAULT 0,
+  is_featured TINYINT(1) NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_gallery_active_sort (is_active, is_featured, sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS contact_messages (

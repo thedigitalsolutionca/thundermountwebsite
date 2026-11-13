@@ -6,6 +6,7 @@ use App\Controllers\Admin\AdminAuthController;
 use App\Controllers\Admin\CatalogController;
 use App\Controllers\Admin\CustomerController;
 use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\GalleryController;
 use App\Controllers\Admin\MarketingController;
 use App\Controllers\Admin\OrderController;
 use App\Controllers\Admin\SettingsController;
@@ -60,13 +61,24 @@ return static function (Router $router): void {
     $router->post('/admin/customers/{id}/toggle', static fn (string $id) => (new CustomerController())->toggle($id));
 
     $router->get('/admin/dealers', static fn () => (new CustomerController())->dealers());
+    $router->post('/admin/dealers/program-toggle', static fn () => (new CustomerController())->toggleDealerProgram());
+    $router->post('/admin/dealers/deactivate-all', static fn () => (new CustomerController())->bulkDeactivateDealers());
     $router->get('/admin/dealers/tiers', static fn () => (new CustomerController())->tiers());
     $router->post('/admin/dealers/tiers', static fn () => (new CustomerController())->saveTier());
     $router->post('/admin/dealers/tiers/{id}', static fn (string $id) => (new CustomerController())->saveTier($id));
     $router->post('/admin/dealers/tiers/{id}/delete', static fn (string $id) => (new CustomerController())->deleteTier($id));
     $router->get('/admin/dealers/{id}', static fn (string $id) => (new CustomerController())->dealer($id));
     $router->post('/admin/dealers/{id}/approve', static fn (string $id) => (new CustomerController())->approveDealer($id));
+    $router->post('/admin/dealers/{id}/deactivate', static fn (string $id) => (new CustomerController())->deactivateDealer($id));
+    $router->post('/admin/dealers/{id}/reactivate', static fn (string $id) => (new CustomerController())->reactivateDealer($id));
     $router->post('/admin/dealers/{id}/reject', static fn (string $id) => (new CustomerController())->rejectDealer($id));
+
+    $router->get('/admin/gallery', static fn () => (new GalleryController())->index());
+    $router->post('/admin/gallery', static fn () => (new GalleryController())->save());
+    $router->post('/admin/gallery/{id}', static fn (string $id) => (new GalleryController())->save($id));
+    $router->post('/admin/gallery/{id}/toggle', static fn (string $id) => (new GalleryController())->toggle($id));
+    $router->post('/admin/gallery/{id}/move', static fn (string $id) => (new GalleryController())->move($id));
+    $router->post('/admin/gallery/{id}/delete', static fn (string $id) => (new GalleryController())->delete($id));
 
     $router->get('/admin/discounts', static fn () => (new MarketingController())->discounts());
     $router->post('/admin/discounts', static fn () => (new MarketingController())->saveDiscount());

@@ -48,6 +48,9 @@ final class Auth
 
     public static function isDealer(): bool
     {
+        if (!\App\Services\DealerService::isProgramEnabled()) {
+            return false;
+        }
         return (self::user()['role'] ?? '') === 'dealer' && (self::user()['dealer_status'] ?? '') === 'approved';
     }
 
@@ -100,7 +103,10 @@ final class Auth
 
     public static function isDealerPending(): bool
     {
+        if (!\App\Services\DealerService::isProgramEnabled()) {
+            return false;
+        }
         $user = self::user();
-        return ($user['role'] ?? '') === 'dealer' && ($user['dealer_status'] ?? '') !== 'approved';
+        return ($user['dealer_status'] ?? '') === 'pending';
     }
 }

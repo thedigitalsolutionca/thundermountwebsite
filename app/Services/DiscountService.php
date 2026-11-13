@@ -35,8 +35,15 @@ final class DiscountService
         if (!empty($discount['ends_at']) && strtotime($discount['ends_at']) < $now) {
             return ['ok' => false, 'error' => 'That discount code has expired.', 'discount' => null, 'amount_cents' => 0];
         }
-        if ((int) $discount['dealer_only'] === 1 && !Auth::isDealer()) {
-            return ['ok' => false, 'error' => 'That code is available to approved dealers only.', 'discount' => null, 'amount_cents' => 0];
+        if ((int) $discount['dealer_only'] === 1 && (!DealerService::isPricingEnabled() || !Auth::isDealer())) {
+            return [
+                'ok' => false,
+                'error' => DealerService::isPricingEnabled()
+                    ? 'That code is available to approved dealers only.'
+                    : 'That discount code is not currently available.',
+                'discount' => null,
+                'amount_cents' => 0,
+            ];
         }
         if ($subtotalCents < Money::toCents($discount['min_subtotal'])) {
             return [

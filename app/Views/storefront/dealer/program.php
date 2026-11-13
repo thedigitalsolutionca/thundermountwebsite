@@ -8,10 +8,18 @@
         <h1 style="font-size:clamp(2.2rem,4.5vw,3.6rem)">Stock the mount that raises the standard.</h1>
         <p class="lead">Thunder Mounts dealer accounts give garage door companies, installers and distributors trade pricing, priority support and a product line customers can see the difference in.</p>
         <div class="flex wrap">
-          <a class="btn btn-primary btn-lg" href="<?= url(auth() ? '/dealer/apply' : '/register') ?>">Apply for a dealer account</a>
+          <?php if (dealer_applications_enabled()): ?>
+            <a class="btn btn-primary btn-lg" href="<?= url(auth() ? '/dealer/apply' : '/register') ?>">Apply for a dealer account</a>
+          <?php else: ?>
+            <a class="btn btn-primary btn-lg" href="<?= url('/contact?subject=' . urlencode('Dealer inquiry')) ?>">Contact our trade team</a>
+          <?php endif; ?>
           <a class="btn btn-outline btn-lg" href="<?= url('/dealer/login') ?>">Dealer sign-in</a>
         </div>
-        <p class="small muted mt-2">Applications are reviewed during business hours. Approved accounts get pricing automatically at checkout.</p>
+        <?php if (dealer_applications_enabled()): ?>
+          <p class="small muted mt-2">Applications are reviewed during business hours. Approved accounts get pricing automatically at checkout.</p>
+        <?php else: ?>
+          <p class="small muted mt-2">New online applications are currently paused. Existing approved dealers can sign in above.</p>
+        <?php endif; ?>
       </div>
       <div class="hero-media">
         <img src="<?= asset('img/tm-install-white.jpg') ?>" alt="Thunder Mounts installation" width="900" height="700" loading="lazy">
@@ -105,8 +113,10 @@
         <p style="color:#C9CED4;margin:0">Apply online. We will confirm your account and pricing.</p>
       </div>
       <div class="flex wrap">
-        <a class="btn btn-primary" href="<?= url(auth() ? '/dealer/apply' : '/register') ?>">Apply now</a>
-        <a class="btn btn-outline" href="<?= url('/contact') ?>" style="border-color:#555;color:#fff">Talk to us</a>
+        <?php if (dealer_applications_enabled()): ?>
+          <a class="btn btn-primary" href="<?= url(auth() ? '/dealer/apply' : '/register') ?>">Apply now</a>
+        <?php endif; ?>
+        <a class="btn btn-outline-light" href="<?= url('/contact') ?>">Talk to us</a>
       </div>
     </div>
   </div>

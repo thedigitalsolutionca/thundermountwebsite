@@ -15,6 +15,7 @@ $nav = [
     ['label' => 'Discounts', 'url' => '/admin/discounts', 'icon' => 'percent', 'match' => '/admin/discounts'],
     ['label' => 'Reviews', 'url' => '/admin/reviews', 'icon' => 'star', 'match' => '/admin/reviews'],
     ['label' => 'Messages', 'url' => '/admin/messages', 'icon' => 'mail', 'match' => '/admin/messages'],
+    ['label' => 'Gallery & Portfolio', 'url' => '/admin/gallery', 'icon' => 'image', 'match' => '/admin/gallery'],
     ['label' => 'Pages', 'url' => '/admin/pages', 'icon' => 'file-text', 'match' => '/admin/pages'],
     ['label' => 'Shipping', 'url' => '/admin/shipping', 'icon' => 'truck', 'match' => '/admin/shipping'],
     ['label' => 'Tax', 'url' => '/admin/tax', 'icon' => 'percent', 'match' => '/admin/tax'],

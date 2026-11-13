@@ -26,11 +26,12 @@ COPY . /var/www/html
 
 COPY docker/apache-thunder.conf /etc/apache2/conf-available/thunder.conf
 COPY docker/entrypoint.sh /usr/local/bin/thunder-entrypoint
-RUN a2enconf thunder \
+RUN printf "upload_max_filesize = 64M\npost_max_size = 68M\n" > /usr/local/etc/php/conf.d/thunder-uploads.ini \
+    && a2enconf thunder \
     && apache2ctl -t \
     && chmod +x /usr/local/bin/thunder-entrypoint \
     && mkdir -p storage/logs storage/cache storage/sessions \
-        public/uploads/products public/uploads/dealers \
+        public/uploads/products public/uploads/dealers public/uploads/gallery \
     && chown -R www-data:www-data storage public/uploads
 
 EXPOSE 80 8080

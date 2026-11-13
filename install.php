@@ -161,6 +161,25 @@ function seed_store(): array
         $counts['pages']++;
     }
 
+    foreach (\App\Services\GalleryService::DEFAULT_ITEMS as $galleryItem) {
+        Database::insert('gallery_items', [
+            'media_type' => $galleryItem['media_type'],
+            'video_source' => '',
+            'title' => $galleryItem['title'],
+            'caption' => $galleryItem['caption'],
+            'category' => $galleryItem['category'],
+            'media_path' => $galleryItem['media_path'],
+            'embed_url' => '',
+            'poster_path' => '',
+            'alt_text' => $galleryItem['alt_text'],
+            'sort_order' => $galleryItem['sort_order'],
+            'is_featured' => $galleryItem['is_featured'],
+            'is_active' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }
+
     foreach ($seed['settings'] ?? [] as $setting) {
         Database::execute(
             'INSERT INTO settings (group_name, `key`, value, updated_at) VALUES (?, ?, ?, ?)',

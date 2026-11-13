@@ -79,6 +79,7 @@ return static function (Router $router): void {
     // File-backed editorial pages work on already-installed stores without a reseed.
     $router->get('/about/inventor', static fn () => (new ResourceController())->story());
     $router->get('/portfolio', static fn () => (new ResourceController())->portfolio());
+    $router->get('/gallery', static fn () => (new ResourceController())->portfolio());
     $router->get('/size-guide', static fn () => (new ResourceController())->sizeGuide());
     $router->get('/resources/instructions', static fn () => (new ResourceController())->instructions());
     $router->get('/sales-sheet', static fn () => (new ResourceController())->salesSheet());

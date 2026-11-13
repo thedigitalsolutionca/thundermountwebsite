@@ -11,13 +11,13 @@ $email = setting('store.email', 'thunder@thundermounts.com');
     <?= \App\Core\View::partial('storefront/partials/breadcrumbs', ['crumbs' => [['label' => 'Contact']]]) ?>
     <span class="eyebrow">Talk to Thunder Mounts</span>
     <h1 style="margin-bottom:6px">We can help you get it right</h1>
-    <p class="muted" style="margin:0;max-width:660px">Fitment questions, order status, dealer accounts or installation advice — reach the team in Simi Valley.</p>
+    <p class="muted" style="margin:0;max-width:660px">Fitment questions, order status<?= dealer_program_enabled() ? ', dealer accounts' : '' ?> or installation advice — reach the team in Simi Valley.</p>
   </div>
 </div>
 
 <section class="section-tight" style="padding-top:12px">
   <div class="container">
-    <div class="grid" style="grid-template-columns:1fr 1.1fr;gap:24px;align-items:start">
+    <div class="contact-layout">
       <div class="stack">
         <div class="card card-body contact-card">
           <?= icon('phone') ?>
@@ -83,7 +83,11 @@ $email = setting('store.email', 'thunder@thundermounts.com');
                 <label for="contact-subject">Subject</label>
                 <select class="select <?= isset($errs['subject']) ? 'invalid' : '' ?>" id="contact-subject" name="subject" required>
                   <?php
-                  $subjects = ['Fitment question', 'Order status', 'Shipping question', 'Returns', 'Dealer account', 'Installation support', 'Product availability', 'Something else'];
+                  $subjects = ['Fitment question', 'Order status', 'Shipping question', 'Returns'];
+                  if (dealer_program_enabled()) {
+                      $subjects[] = 'Dealer account';
+                  }
+                  array_push($subjects, 'Installation support', 'Product availability', 'Something else');
                   $currentSubject = old('subject', $prefillSubject ?? '');
                   ?>
                   <option value="">Choose a subject</option>

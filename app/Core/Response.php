@@ -70,11 +70,15 @@ final class Response
         if (headers_sent()) {
             return;
         }
+        $isProduction = Config::get('app.env', 'production') === 'production';
         header('X-Content-Type-Options: nosniff');
-        header('X-Frame-Options: SAMEORIGIN');
+        if ($isProduction) {
+            header('X-Frame-Options: SAMEORIGIN');
+        }
         header('Referrer-Policy: strict-origin-when-cross-origin');
         header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
-        header("Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'self'; form-action 'self' https://www.paypal.com; img-src 'self' data: https://www.paypalobjects.com https://*.paypal.com; script-src 'self' 'unsafe-inline' https://www.paypal.com https://www.paypalobjects.com https://applepay.cdn-apple.com https://pay.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.paypal.com https://api-m.paypal.com https://api-m.sandbox.paypal.com https://*.paypal.com https://applepay.cdn-apple.com; frame-src https://www.paypal.com https://*.paypal.com https://applepay.cdn-apple.com https://pay.google.com; object-src 'none'");
+        $frameAncestors = $isProduction ? "frame-ancestors 'self'; " : '';
+        header("Content-Security-Policy: default-src 'self'; base-uri 'self'; {$frameAncestors}form-action 'self' https://www.paypal.com; img-src 'self' data: blob: https://www.paypalobjects.com https://*.paypal.com https://i.ytimg.com https://img.youtube.com https://i.vimeocdn.com; media-src 'self' blob: https:; script-src 'self' 'unsafe-inline' https://www.paypal.com https://www.paypalobjects.com https://applepay.cdn-apple.com https://pay.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://www.paypal.com https://api-m.paypal.com https://api-m.sandbox.paypal.com https://*.paypal.com https://applepay.cdn-apple.com; frame-src https://www.paypal.com https://*.paypal.com https://applepay.cdn-apple.com https://pay.google.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; object-src 'none'");
         if (Request::isSecure()) {
             header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
         }

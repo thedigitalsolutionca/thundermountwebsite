@@ -77,7 +77,7 @@ final class ChatService
     public function answer(string $question): array
     {
         $query = mb_strtolower($question);
-        foreach (['colour' => 'color', 'colours' => 'color', 'colors' => 'color', 'founder' => 'inventor gustavo', 'invented' => 'inventor gustavo', 'created' => 'inventor', 'gus' => 'gustavo', 'sizing' => 'sizes length', 'coat' => 'coating', 'install' => 'installation instructions', 'shipping' => 'shipping delivery', 'cost' => 'price', 'return' => 'returns'] as $word => $expansion) {
+        foreach (['colour' => 'color', 'colours' => 'color', 'colors' => 'color', 'founder' => 'inventor gustavo', 'invented' => 'inventor gustavo', 'created' => 'inventor', 'gus' => 'gustavo', 'sizing' => 'sizes length', 'coat' => 'coating', 'install' => 'installation instructions', 'shipping' => 'shipping delivery', 'cost' => 'price', 'return' => 'returns', 'gallery' => 'portfolio photographs videos', 'videos' => 'portfolio gallery'] as $word => $expansion) {
             if (preg_match('/\b' . $word . '\b/u', $query)) $query .= ' ' . $expansion;
         }
         $tokens = array_unique(preg_split('/[^\p{L}\p{N}-]+/u', $query, -1, PREG_SPLIT_NO_EMPTY) ?: []);

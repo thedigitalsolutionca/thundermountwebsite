@@ -6,7 +6,6 @@ namespace App\Controllers\Storefront;
 
 use App\Core\Auth;
 use App\Core\Csrf;
-use App\Core\Money;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Session;
@@ -17,8 +16,16 @@ use App\Services\UploadService;
 
 final class DealerController
 {
+    private function abortClosed(): never
+    {
+        Response::html(View::render('errors/404', ['pageTitle' => 'Page not found'], 'layouts/storefront'), 404);
+    }
+
     public function program(): string
     {
+        if (!DealerService::arePagesEnabled()) {
+            $this->abortClosed();
+        }
         $dealerService = new DealerService();
         return View::render('storefront/dealer/program', [
             'pageTitle' => 'Dealer Program',
@@ -29,6 +36,12 @@ final class DealerController
 
     public function loginForm(): string
     {
+        if (!DealerService::isProgramEnabled()) {
+            if (Auth::check()) {
+                Response::redirect(url('/account'));
+            }
+            $this->abortClosed();
+        }
         if (Auth::check()) {
             Response::redirect(url('/dealer/account'));
         }
@@ -40,6 +53,13 @@ final class DealerController
 
     public function applyForm(): string
     {
+        if (!DealerService::isProgramEnabled()) {
+            $this->abortClosed();
+        }
+        if (!DealerService::areApplicationsEnabled()) {
+            flash('info', 'New dealer applications are currently closed. Please contact us if you have questions.');
+            Response::redirect(url(DealerService::arePagesEnabled() ? '/dealer-program' : '/contact'));
+        }
         if (!Auth::check()) {
             flash('info', 'Create a free account first, then apply for dealer pricing.');
             Response::redirect(url('/register'));
@@ -57,6 +77,13 @@ final class DealerController
 
     public function apply(): never
     {
+        if (!DealerService::isProgramEnabled()) {
+            $this->abortClosed();
+        }
+        if (!DealerService::areApplicationsEnabled()) {
+            flash('info', 'New dealer applications are currently closed.');
+            Response::redirect(url(DealerService::arePagesEnabled() ? '/dealer-program' : '/contact'));
+        }
         if (!Auth::check()) {
             Response::redirect(url('/register'));
         }
@@ -88,12 +115,24 @@ final class DealerController
             Response::redirect(url('/dealer/apply'));
         }
         clear_input();
-        flash('success', 'Your dealer application was received. We review applications during business hours.');
+        $status = $result['dealer']['status'] ?? 'pending';
+        if ($status === 'approved') {
+            flash('success', 'Your dealer account has been approved! Your trade pricing is now active.');
+        } else {
+            flash('success', 'Your dealer application was received. We review applications during business hours.');
+        }
         Response::redirect(url('/dealer/account'));
     }
 
     public function dashboard(): string
     {
+        if (!DealerService::isProgramEnabled()) {
+            if (Auth::check()) {
+                flash('info', 'The dealer portal is currently closed. You can manage your orders from your account.');
+                Response::redirect(url('/account'));
+            }
+            $this->abortClosed();
+        }
         if (!Auth::check()) {
             Response::redirect(url('/dealer/login'));
         }
@@ -107,7 +146,7 @@ final class DealerController
         }
         $orderService = new OrderService();
         $dealerId = (int) $dealer['id'];
-        $orders = $dealer['status'] === 'approved' ? $orderService->forDealer($dealerId, 5) : [];
+        $orders = in_array($dealer['status'], ['approved', 'inactive'], true) ? $orderService->forDealer($dealerId, 5) : [];
         $totalSpent = (float) \App\Core\Database::value(
             "SELECT COALESCE(SUM(total), 0) FROM orders WHERE dealer_id = ? AND payment_status IN ('paid','partially_refunded')",
             [$dealerId],
@@ -125,11 +164,17 @@ final class DealerController
 
     public function orders(): string
     {
+        if (!DealerService::isProgramEnabled()) {
+            if (Auth::check()) {
+                Response::redirect(url('/account/orders'));
+            }
+            $this->abortClosed();
+        }
         if (!Auth::check()) {
             Response::redirect(url('/dealer/login'));
         }
         $dealer = (new DealerService())->forUser((int) Auth::id());
-        if (!$dealer || $dealer['status'] !== 'approved') {
+        if (!$dealer || !in_array($dealer['status'], ['approved', 'inactive'], true)) {
             Response::redirect(url('/dealer/account'));
         }
         $orders = (new OrderService())->forDealer((int) $dealer['id'], 100);

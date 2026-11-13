@@ -40,7 +40,7 @@ Config::load($config);
 date_default_timezone_set((string) Config::get('app.timezone', 'America/Los_Angeles'));
 
 // Ensure writable runtime directories exist.
-foreach (['storage/logs', 'storage/cache', 'public/uploads/products'] as $dir) {
+foreach (['storage/logs', 'storage/cache', 'public/uploads/products', 'public/uploads/dealers', 'public/uploads/gallery'] as $dir) {
     $absolute = TM_ROOT . '/' . $dir;
     if (!is_dir($absolute)) {
         @mkdir($absolute, 0775, true);
@@ -119,6 +119,12 @@ try {
     $footerPages = Database::select(
         'SELECT title, slug FROM pages WHERE is_active = 1 AND show_in_footer = 1 ORDER BY sort_order, title LIMIT 6'
     );
+    if (!\App\Services\DealerService::arePagesEnabled()) {
+        $footerPages = array_values(array_filter(
+            $footerPages,
+            static fn (array $p): bool => ($p['slug'] ?? '') !== 'dealer-program'
+        ));
+    }
 } catch (Throwable) {
 }
 

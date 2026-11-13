@@ -102,25 +102,19 @@ final class CustomerController
     public function dealers(): string
     {
         $status = trim((string) Request::query('status', ''));
-        $where = ['1 = 1'];
-        $params = [];
-        if (in_array($status, ['pending', 'approved', 'rejected'], true)) {
-            $where[] = 'd.status = ?';
-            $params[] = $status;
-        }
-        $dealers = Database::select(
-            'SELECT d.*, t.name AS tier_name, t.discount_percent
-             FROM dealers d LEFT JOIN dealer_tiers t ON t.id = d.tier_id
-             WHERE ' . implode(' AND ', $where) . '
-             ORDER BY CASE d.status WHEN "pending" THEN 0 WHEN "approved" THEN 1 ELSE 2 END, d.applied_at DESC',
-            $params
-        );
+        $q = trim((string) Request::query('q', ''));
+        $service = new DealerService();
+        $dealers = $service->list([
+            'status' => in_array($status, ['pending', 'approved', 'inactive', 'rejected'], true) ? $status : '',
+            'q' => $q,
+        ]);
         return View::render('admin/dealers/index', [
             'pageTitle' => 'Dealers',
             'dealers' => $dealers,
             'status' => $status,
-            'counts' => (new DealerService())->counts(),
-            'tiers' => (new DealerService())->tiers(),
+            'q' => $q,
+            'counts' => $service->counts(),
+            'tiers' => $service->tiers(),
         ], 'layouts/admin');
     }
 
@@ -153,6 +147,61 @@ final class CustomerController
         $result = (new DealerService())->reject((int) $id, Auth::id(), $note);
         flash($result['ok'] ? 'success' : 'error', $result['message']);
         Response::redirect(url('/admin/dealers/' . (int) $id));
+    }
+
+    public function deactivateDealer(string $id): never
+    {
+        Csrf::require();
+        $note = trim((string) Request::input('note', ''));
+        $result = (new DealerService())->deactivate((int) $id, Auth::id(), $note);
+        flash($result['ok'] ? 'success' : 'error', $result['message']);
+        Response::redirect(url('/admin/dealers/' . (int) $id));
+    }
+
+    public function reactivateDealer(string $id): never
+    {
+        Csrf::require();
+        $tierId = Request::int('tier_id') ?: null;
+        $note = trim((string) Request::input('note', ''));
+        $result = (new DealerService())->reactivate((int) $id, Auth::id(), $tierId, $note);
+        flash($result['ok'] ? 'success' : 'error', $result['message']);
+        Response::redirect(url('/admin/dealers/' . (int) $id));
+    }
+
+    public function bulkDeactivateDealers(): never
+    {
+        Csrf::require();
+        $count = (new DealerService())->deactivateAllApproved(Auth::id(), 'Bulk deactivated from Admin');
+        if ($count === 0) {
+            flash('info', 'There were no active approved dealers to deactivate.');
+        } else {
+            flash('success', $count . ' approved dealer account' . ($count === 1 ? ' was' : 's were') . ' deactivated.');
+        }
+        $returnTo = (string) Request::input('return_to', '/admin/dealers');
+        if (!str_starts_with($returnTo, '/admin')) {
+            $returnTo = '/admin/dealers';
+        }
+        Response::redirect(url($returnTo));
+    }
+
+    public function toggleDealerProgram(): never
+    {
+        Csrf::require();
+        $raw = (string) Request::input('enable', (string) Request::input('enabled', ''));
+        $enable = $raw === '1';
+        \App\Core\Settings::set('dealer.enabled', $enable ? '1' : '0', 'dealer');
+        \App\Core\Logger::activity(Auth::id(), $enable ? 'dealer.program_opened' : 'dealer.program_closed', 'settings', 'dealer.enabled');
+        flash(
+            'success',
+            $enable
+                ? 'Dealer program is now open. Storefront dealer pages, sign-in and pricing follow your configured dealer settings.'
+                : 'Dealer program is now closed across the storefront. All dealer pages, links, applications and trade pricing are turned off.'
+        );
+        $returnTo = (string) Request::input('return_to', '/admin/dealers');
+        if (!str_starts_with($returnTo, '/admin')) {
+            $returnTo = '/admin/dealers';
+        }
+        Response::redirect(url($returnTo));
     }
 
     public function tiers(): string
