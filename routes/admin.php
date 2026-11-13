@@ -19,6 +19,12 @@ return static function (Router $router): void {
     $router->post('/admin/logout', static fn () => (new AdminAuthController())->logout());
 
     $router->get('/admin', static fn () => (new DashboardController())->index());
+    $router->get('/admin/data', static fn () => (new \App\Controllers\Admin\OperationsController())->data());
+    $router->post('/admin/data/delete', static fn () => (new \App\Controllers\Admin\OperationsController())->deleteData());
+    $router->get('/admin/emails', static fn () => (new \App\Controllers\Admin\OperationsController())->emails());
+    $router->post('/admin/emails/{id}/resend', static fn (string $id) => (new \App\Controllers\Admin\OperationsController())->resendEmail($id));
+    $router->post('/admin/settings/email/diagnose', static fn () => (new SettingsController())->diagnoseEmail());
+
 
     $router->get('/admin/orders', static fn () => (new OrderController())->index());
     $router->get('/admin/orders/export', static fn () => (new OrderController())->export());

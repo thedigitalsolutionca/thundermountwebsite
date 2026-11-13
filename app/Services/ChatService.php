@@ -14,7 +14,7 @@ use Throwable;
 /** Public-content retrieval only. No customer, order, dealer-price or admin data. */
 final class ChatService
 {
-    public const MODELS = ['openai' => 'gpt-4o-mini', 'gemini' => 'gemini-2.5-flash', 'grok' => 'grok-3-mini'];
+    public const MODELS = ['openai' => 'gpt-4o-mini', 'gemini' => 'gemini-2.5-flash', 'groq' => 'llama-3.3-70b-versatile'];
 
     public function __construct(private readonly ?Closure $transport = null) {}
 
@@ -129,7 +129,7 @@ final class ChatService
                 $headers = ['x-goog-api-key: ' . $key];
                 $payload = ['systemInstruction' => ['parts' => [['text' => $system]]], 'contents' => [['role' => 'user', 'parts' => [['text' => $question]]]], 'generationConfig' => ['maxOutputTokens' => 600, 'temperature' => 0.2]];
             } else {
-                $endpoint = $provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions';
+                $endpoint = $provider === 'openai' ? 'https://api.openai.com/v1/chat/completions' : 'https://api.groq.com/openai/v1/chat/completions';
                 $headers = ['Authorization: Bearer ' . $key];
                 $payload = ['model' => $model, 'messages' => [['role' => 'system', 'content' => $system], ['role' => 'user', 'content' => $question]], 'max_tokens' => 600, 'temperature' => 0.2];
             }

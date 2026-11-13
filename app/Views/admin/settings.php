@@ -121,11 +121,11 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
   <form action="<?= url('/admin/settings') ?>" method="post" class="admin-card">
     <?= csrf_field() ?>
     <input type="hidden" name="group" value="mail">
-    <div class="admin-card-head"><div><h3>Transactional email</h3><span>Order confirmations, shipping notices, password resets and dealer emails.</span></div><span class="badge <?= $mailConfigured ? 'badge-green' : 'badge-amber' ?>"><?= $mailConfigured ? 'SMTP configured' : 'Using PHP mail()' ?></span></div>
+    <div class="admin-card-head"><div><h3>Transactional email</h3><span>Order confirmations, shipping notices, password resets and dealer emails.</span></div><span class="badge <?= $mailConfigured ? 'badge-green' : 'badge-amber' ?>"><?= e(setting('mail.transport', 'mail') === 'resend' ? 'HTTPS API transport' : ($mailConfigured ? 'SMTP settings saved' : 'Review mail configuration')) ?></span></div>
     <div class="admin-card-body">
       <div class="form-row">
-        <div class="field"><label for="transport">Transport</label><select class="select" id="transport" name="settings[mail.transport]"><option value="mail"<?= selected('mail', setting('mail.transport', 'mail')) ?>>PHP mail()</option><option value="smtp"<?= selected('smtp', setting('mail.transport', 'mail')) ?>>SMTP</option></select><span class="hint">SMTP is recommended on Hostinger. The test button saves these details first.</span></div>
-        <div class="field"><label for="from-address">From address</label><input class="input" id="from-address" type="email" name="settings[mail.from_address]" value="<?= $get('mail.from_address') ?>"></div>
+        <div class="field"><label for="transport">Transport</label><select class="select" id="transport" name="settings[mail.transport]"><option value="mail"<?= selected('mail', setting('mail.transport', 'mail')) ?>>PHP mail()</option><option value="smtp"<?= selected('smtp', setting('mail.transport', 'mail')) ?>>SMTP</option><option value="resend"<?= selected('resend', setting('mail.transport', 'mail')) ?>>Resend API (HTTPS / port 443)</option></select><span class="hint">Use SMTP if your host allows outbound mail ports. Use Resend HTTPS when those ports are blocked. Test and diagnostics save the form first.</span></div>
+        <div class="field"><label for="from-address">From address</label><input class="input" id="from-address" type="email" name="settings[mail.from_address]" value="<?= $get('mail.from_address', (string) \App\Core\Config::get('mail.from_address', 'no-reply@thundermounts.com')) ?>"></div>
       </div>
       <div class="form-row">
         <div class="field"><label for="mail-host">SMTP host</label><input class="input" id="mail-host" name="settings[encrypted.mail_host]" value="" placeholder="<?= $mailConfigured ? 'Saved — leave blank to keep' : 'smtp.hostinger.com' ?>"></div>
@@ -136,8 +136,15 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
         <div class="field"><label for="mail-username">SMTP username</label><input class="input" id="mail-username" name="settings[encrypted.mail_username]" value="" autocomplete="off" placeholder="<?= $mailConfigured ? 'Saved — leave blank to keep' : 'Usually the full email address' ?>"></div>
       </div>
       <div class="field" style="max-width:420px"><label for="mail-password">SMTP password</label><input class="input" id="mail-password" type="password" name="settings[encrypted.mail_password]" value="" autocomplete="new-password" placeholder="<?= $mailConfigured ? 'Saved — leave blank to keep' : 'Enter password' ?>"></div>
+      <div class="form-row">
+        <div class="field"><label for="mail-timeout">Connection timeout (seconds)</label><input class="input" id="mail-timeout" type="number" min="5" max="60" name="settings[mail.timeout]" value="<?= $get('mail.timeout', '15') ?>"></div>
+        <div class="field"><label for="mail-resend-key">Resend API key (HTTPS transport only)</label><input class="input" id="mail-resend-key" type="password" name="settings[encrypted.mail_resend_key]" autocomplete="new-password" placeholder="<?= setting('encrypted.mail_resend_key', '') ? 'Saved — leave blank to keep' : 'Enter your Resend API key' ?>"><span class="hint">Encrypted server-side. Verify your sender domain in Resend before sending.</span></div>
+      </div>
+      <div class="notice notice-info"><div><strong>Connection timed out (110)?</strong> This occurs before login. Confirm the hostname (without a protocol), 465 + SSL or 587 + TLS, and ask the hosting provider whether outbound SMTP is allowed. Increasing the timeout will not bypass a firewall. If ports are blocked, configure Resend over HTTPS instead. Do not disable TLS certificate verification.</div></div>
       <div class="flex wrap mt-2">
         <button class="btn btn-primary" type="submit">Save email settings</button>
+        <button class="btn btn-outline" type="submit" formaction="<?= url('/admin/settings/email/diagnose') ?>">Save &amp; diagnose connection</button>
+        <a class="btn btn-ghost" href="<?= url('/admin/emails?status=failed') ?>">View failed emails</a>
         <button class="btn btn-outline" type="submit" formaction="<?= url('/admin/settings/email/test') ?>" formnovalidate>Save &amp; send test email</button>
       </div>
     </div>
@@ -149,14 +156,16 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
     <input type="hidden" name="group" value="chat">
     <div class="admin-card-head"><div><h3>Website assistant &amp; AI providers</h3><span>Public website answers, with optional AI assistance.</span></div></div>
     <div class="admin-card-body">
+      <?php if (setting('chat.provider', 'website') === 'grok'): ?><div class="admin-alert">The previous xAI Grok selection is no longer used. Choose Groq and enter a Groq API key below; old credentials are not reused for a different provider.</div><?php endif; ?>
+      <?php if (setting('encrypted.chat.grok_key', '') !== ''): ?><label class="check"><input type="checkbox" name="chat_clear_legacy_grok" value="1"><span>Remove the unused legacy xAI credential</span></label><?php endif; ?>
       <label class="check"><input type="checkbox" name="settings[chat.enabled]" value="1" <?= \App\Core\Settings::bool('chat.enabled', true) ? 'checked' : '' ?>><span>Show the assistant on storefront pages</span></label>
       <div class="field mt-2"><label for="chat-provider">Answer provider</label><select class="select" id="chat-provider" name="settings[chat.provider]">
-        <?php foreach (['website' => 'Website content only — no API key needed', 'gemini' => 'Google Gemini', 'grok' => 'xAI Grok', 'openai' => 'OpenAI'] as $value => $label): ?>
+        <?php foreach (['website' => 'Website content only — no API key needed', 'gemini' => 'Google Gemini', 'groq' => 'Groq', 'openai' => 'OpenAI'] as $value => $label): ?>
           <option value="<?= e($value) ?>"<?= selected(setting('chat.provider', 'website'), $value) ?>><?= e($label) ?></option>
         <?php endforeach; ?>
       </select></div>
       <p class="muted small">The assistant searches published pages, articles, and public product descriptions. AI mode sends the question and matching excerpts to the selected provider. No account records, order details, or conversation history are included. If a key is missing or the provider fails, the assistant uses website excerpts.</p>
-      <?php foreach (['gemini' => 'Google Gemini', 'grok' => 'xAI Grok', 'openai' => 'OpenAI'] as $provider => $label): ?>
+      <?php foreach (['gemini' => 'Google Gemini', 'groq' => 'Groq', 'openai' => 'OpenAI'] as $provider => $label): ?>
         <fieldset style="border:1px solid var(--gray-200);border-radius:8px;padding:20px;margin:20px 0">
           <legend><?= e($label) ?></legend>
           <div class="field"><label for="chat-<?= e($provider) ?>-key">API key</label>
@@ -167,7 +176,7 @@ $get = static fn (string $key, string $default = '') => e((string) setting($key,
           <label class="check"><input type="checkbox" name="chat_clear_<?= e($provider) ?>" value="1"><span>Remove this saved API key when saving</span></label>
         </fieldset>
       <?php endforeach; ?>
-      <p class="tiny muted">Production AI mode requires PHP cURL and outbound HTTPS access to api.openai.com, api.x.ai, or generativelanguage.googleapis.com. Website-only mode needs no external AI service. Rate limits: 12 questions/minute per session and 60/hour per IP.</p>
+      <p class="tiny muted">Production AI mode requires PHP cURL and outbound HTTPS access to api.openai.com, api.groq.com, or generativelanguage.googleapis.com. Website-only mode needs no external AI service. Rate limits: 12 questions/minute per session and 60/hour per IP.</p>
     </div>
     <div class="admin-save-row"><button class="btn btn-primary" type="submit">Save assistant settings</button></div>
   </form>

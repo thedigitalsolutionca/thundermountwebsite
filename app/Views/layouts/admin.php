@@ -18,6 +18,8 @@ $nav = [
     ['label' => 'Pages', 'url' => '/admin/pages', 'icon' => 'file-text', 'match' => '/admin/pages'],
     ['label' => 'Shipping', 'url' => '/admin/shipping', 'icon' => 'truck', 'match' => '/admin/shipping'],
     ['label' => 'Tax', 'url' => '/admin/tax', 'icon' => 'percent', 'match' => '/admin/tax'],
+    ['label' => 'Email delivery', 'url' => '/admin/emails', 'icon' => 'mail', 'match' => '/admin/emails'],
+    ['label' => 'Data management', 'url' => '/admin/data', 'icon' => 'settings', 'match' => '/admin/data'],
     ['label' => 'Settings', 'url' => '/admin/settings', 'icon' => 'settings', 'match' => '/admin/settings'],
 ];
 ?><!DOCTYPE html>

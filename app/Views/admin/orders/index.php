@@ -3,6 +3,7 @@ use App\Core\Money;
 ?>
 <div class="admin-head">
   <div><h2>Orders</h2><p><?= (int) $paginator->total ?> order<?= (int) $paginator->total === 1 ? '' : 's' ?> match this view.</p></div>
+  <a class="btn btn-ghost btn-sm" href="<?= url('/admin/data?type=orders') ?>">Clean up eligible cancelled orders</a>
   <a class="btn btn-outline btn-sm" href="<?= url('/admin/orders/export' . query_string()) ?>"><?= icon('download') ?> Export CSV</a>
 </div>
 

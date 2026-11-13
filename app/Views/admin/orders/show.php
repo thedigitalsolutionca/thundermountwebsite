@@ -170,3 +170,7 @@ $customerNotes = array_values(array_filter($order['notes'], static fn ($n) => (i
     <?php endif; ?>
   </div>
 </div>
+
+<?php if ($order['status'] === 'cancelled'): ?>
+<div class="admin-card mt-3"><div class="admin-card-body"><h3>Order retention</h3><p class="small muted">Paid, refunded, PayPal-linked and stock-audited orders are protected. Eligible never-paid cancelled orders can be permanently removed after password confirmation in Data management.</p><a class="btn btn-outline btn-sm" href="<?= url('/admin/data?' . http_build_query(['type' => 'orders', 'record' => $order['id'], 'before' => date('Y-m-d', strtotime('tomorrow'))])) ?>">Review deletion eligibility</a></div></div>
+<?php endif; ?>

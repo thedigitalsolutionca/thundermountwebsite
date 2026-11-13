@@ -47,7 +47,7 @@ try {
         $stored = Database::value('SELECT value FROM settings WHERE `key` = ?', ['encrypted.chat.' . $provider . '_key']);
         check(str_starts_with($stored, 'v1:') && !str_contains($stored, 'test-only'), 'Encrypted key: ' . $provider);
         $mock = new ChatService(static function ($endpoint, $headers, $payload) use ($provider, $model) {
-            $expectedHost = ['gemini' => 'generativelanguage.googleapis.com', 'grok' => 'api.x.ai', 'openai' => 'api.openai.com'][$provider];
+            $expectedHost = ['gemini' => 'generativelanguage.googleapis.com', 'groq' => 'api.groq.com', 'openai' => 'api.openai.com'][$provider];
             check(parse_url($endpoint, PHP_URL_HOST) === $expectedHost, 'Fixed endpoint: ' . $provider);
             check(!str_contains(json_encode($payload), 'test-only'), 'No credentials in prompt');
             if ($provider === 'gemini') {
@@ -65,7 +65,7 @@ try {
         check($malformed['mode'] === 'website', 'Malformed response fallback: ' . $provider);
     }
 
-    Settings::set('encrypted.chat.grok_key', '', 'chat');
+    Settings::set('encrypted.chat.groq_key', '', 'chat');
     $missingKey = (new ChatService(static function () { throw new RuntimeException('Must not make a request without a key'); }))->answer('Tell me about powder coating');
     check($missingKey['mode'] === 'website' && !isset($missingKey['notice']), 'Missing key uses website mode without a provider request');
     Settings::set('chat.enabled', '0', 'chat');

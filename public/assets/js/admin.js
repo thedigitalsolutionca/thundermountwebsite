@@ -52,3 +52,17 @@
 
   // Flash dismissal is handled by app.js ([data-flash-close]).
 })();
+
+// Select only visible cleanup records; selections never carry across pages.
+(function () {
+  var toggle = document.querySelector('[data-select-records]');
+  if (!toggle) return;
+  var form = toggle.closest('form');
+  var boxes = Array.from(form.querySelectorAll('input[name="ids[]"]'));
+  toggle.addEventListener('change', function () { boxes.forEach(function (box) { box.checked = toggle.checked; }); });
+  boxes.forEach(function (box) { box.addEventListener('change', function () {
+    var count = boxes.filter(function (item) { return item.checked; }).length;
+    toggle.checked = count === boxes.length;
+    toggle.indeterminate = count > 0 && count < boxes.length;
+  }); });
+})();
