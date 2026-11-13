@@ -1,6 +1,7 @@
 <?php use App\Core\Csrf; ?>
 <div class="admin-head">
   <div><h2>Messages</h2><p>Contact form enquiries from the storefront.</p></div>
+  <a class="btn btn-outline btn-sm" href="<?= url('/admin/data?type=messages') ?>">Manage / delete messages</a>
 </div>
 
 <div class="admin-grid-2" style="grid-template-columns:1fr 1.3fr;align-items:start">
@@ -36,6 +37,7 @@
         </p>
         <div class="admin-note"><p style="white-space:pre-line"><?= e($selected['message']) ?></p></div>
         <div class="flex wrap mt-2">
+          <a class="btn btn-ghost btn-sm" href="<?= url('/admin/data?' . http_build_query(['type' => 'messages', 'record' => $selected['id'], 'before' => date('Y-m-d', strtotime('tomorrow'))])) ?>">Delete message…</a>
           <a class="btn btn-primary btn-sm" href="mailto:<?= e($selected['email']) ?>?subject=<?= rawurlencode('Re: ' . $selected['subject']) ?>"><?= icon('mail') ?> Reply by email</a>
           <?php if ($selected['phone']): ?><a class="btn btn-outline btn-sm" href="tel:<?= e(preg_replace('/\D+/', '', $selected['phone'])) ?>">Call</a><?php endif; ?>
           <form action="<?= url('/admin/messages/' . (int) $selected['id'] . '/status') ?>" method="post">

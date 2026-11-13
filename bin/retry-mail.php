@@ -10,7 +10,7 @@ declare(strict_types=1);
  *
  * Only rows from the last 7 days are retried, and only once: a failed retry
  * rewrites the error with a "Retry attempt" prefix so the next run skips it.
- * Each attempt is also recorded as its own email_log row by Mailer::send().
+ * The existing record is claimed atomically and updated by Mailer::resend().
  */
 
 define('TM_CLI', true);
@@ -46,27 +46,19 @@ $sent = 0;
 $failed = 0;
 
 foreach ($rows as $row) {
-    $before = (int) Database::value('SELECT COALESCE(MAX(id), 0) FROM email_log');
-    $ok = Mailer::send((string) $row['to_email'], (string) $row['subject'], (string) ($row['body'] ?? ''));
-    if ($ok) {
-        Database::update('email_log', [
-            'status' => 'sent',
-            'error' => null,
-            'sent_at' => date('Y-m-d H:i:s'),
-        ], 'id = ?', [(int) $row['id']]);
+    if (trim((string) $row['body']) === '') {
+        Database::update('email_log', ['error' => 'Retry attempt skipped: no message body retained.'], 'id = ?', [$row['id']]);
+        continue;
+    }
+    $result = Mailer::resend((int) $row['id']);
+    if ($result['ok']) {
         $sent++;
-        echo 'sent   #' . $row['id'] . ' ' . $row['to_email'] . PHP_EOL;
+        echo 'sent   #' . $row['id'] . PHP_EOL;
     } else {
-        Database::update('email_log', [
-            'error' => 'Retry attempt at ' . date('Y-m-d H:i:s') . ' failed; see the newer log row for details.',
-        ], 'id = ?', [(int) $row['id']]);
-        // Do not let the copy Mailer::send() just wrote become a retry candidate.
-        Database::execute(
-            "UPDATE email_log SET error = ? WHERE id > ? AND status = 'failed' AND (error IS NULL OR error NOT LIKE '%retry attempt%')",
-            ['Created by a retry attempt; not retried again automatically.', $before]
-        );
+        // Only mark a failure owned by this attempt; never change another worker's queued row.
+        Database::execute("UPDATE email_log SET error = ? WHERE id = ? AND status = 'failed'", ['Retry attempt at ' . now() . ' failed. Review mail settings before a manual retry.', $row['id']]);
         $failed++;
-        echo 'failed #' . $row['id'] . ' ' . $row['to_email'] . PHP_EOL;
+        echo 'failed #' . $row['id'] . PHP_EOL;
     }
 }
 

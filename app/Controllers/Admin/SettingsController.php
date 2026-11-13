@@ -42,11 +42,11 @@ final class SettingsController
 
     private const GROUPS = [
         'chat' => [
-            'text' => ['chat.openai_model', 'chat.gemini_model', 'chat.grok_model'],
+            'text' => ['chat.openai_model', 'chat.gemini_model', 'chat.groq_model'],
             'bool' => ['chat.enabled'],
             'email' => [],
-            'choice' => ['chat.provider' => ['website', 'openai', 'gemini', 'grok']],
-            'secret' => ['encrypted.chat.openai_key', 'encrypted.chat.gemini_key', 'encrypted.chat.grok_key'],
+            'choice' => ['chat.provider' => ['website', 'openai', 'gemini', 'groq']],
+            'secret' => ['encrypted.chat.openai_key', 'encrypted.chat.gemini_key', 'encrypted.chat.groq_key'],
         ],
         'store' => [
             'text' => ['store.name', 'store.legal_name', 'store.tagline', 'store.phone', 'store.office_phone', 'store.email', 'store.notification_email', 'store.address', 'store.hours', 'store.currency', 'store.announcement', 'store.announcement_link'],
@@ -71,11 +71,11 @@ final class SettingsController
             'choice' => ['paypal.mode' => ['sandbox', 'live']],
         ],
         'mail' => [
-            'text' => ['mail.port', 'mail.from_address'],
+            'text' => ['mail.port', 'mail.from_address', 'mail.timeout'],
             'bool' => [],
             'email' => ['mail.from_address'],
-            'secret' => ['encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password'],
-            'choice' => ['mail.transport' => ['mail', 'smtp'], 'mail.encryption' => ['tls', 'ssl', 'none']],
+            'secret' => ['encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password', 'encrypted.mail_resend_key'],
+            'choice' => ['mail.transport' => ['mail', 'smtp', 'resend'], 'mail.encryption' => ['tls', 'ssl', 'none']],
         ],
         'preferences' => [
             'text' => ['inventory.low_stock_threshold'],
@@ -114,8 +114,34 @@ final class SettingsController
             return ['group' => 'Unknown settings group.'];
         }
         $errors = [];
+        if ($group === 'mail') {
+            foreach (['mail.port', 'mail.from_address', 'mail.timeout', 'mail.transport', 'mail.encryption', 'encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password', 'encrypted.mail_resend_key'] as $key) {
+                if (isset($input[$key]) && !is_string($input[$key])) return [$key => 'Enter a text value.'];
+            }
+            $input['mail.timeout'] = $input['mail.timeout'] ?? '15';
+            if (!ctype_digit($input['mail.timeout']) || (int) $input['mail.timeout'] < 5 || (int) $input['mail.timeout'] > 60) $errors['mail.timeout'] = 'Use a timeout between 5 and 60 seconds.';
+            foreach (['encrypted.mail_host', 'encrypted.mail_username', 'encrypted.mail_password', 'encrypted.mail_resend_key'] as $key) {
+                $value = trim($input[$key] ?? '');
+                if (strlen($value) > 1000 || preg_match('/[\r\n]/', $value)) $errors[$key] = 'Use a value of up to 1000 characters without line breaks.';
+                elseif ($value !== '' && \App\Core\Crypt::encrypt($value) === null) $errors[$key] = 'Configure APP_KEY and OpenSSL before saving credentials.';
+            }
+            $candidate = [
+                'transport' => $input['mail.transport'] ?? '',
+                'from_address' => trim($input['mail.from_address'] ?? ''),
+                'reply_to' => setting('store.email', 'thunder@thundermounts.com'),
+                'host' => trim($input['encrypted.mail_host'] ?? '') ?: (string) (setting('encrypted.mail_host', '') ?: \App\Core\Config::get('mail.host', '')),
+                'port' => $input['mail.port'] ?? '', 'encryption' => $input['mail.encryption'] ?? '',
+                'username' => trim($input['encrypted.mail_username'] ?? '') ?: (string) (setting('encrypted.mail_username', '') ?: \App\Core\Config::get('mail.username', '')),
+                'password' => trim($input['encrypted.mail_password'] ?? '') ?: (string) (setting('encrypted.mail_password', '') ?: \App\Core\Config::get('mail.password', '')),
+                'api_key' => trim($input['encrypted.mail_resend_key'] ?? '') ?: (string) setting('encrypted.mail_resend_key', ''),
+            ];
+            if (!in_array($candidate['transport'], ['smtp', 'mail', 'resend'], true)) $errors['mail.transport'] = 'Choose a supported transport.';
+            $configErrors = Mailer::validateConfiguration($candidate);
+            if ($configErrors !== []) $errors['mail.configuration'] = implode(' ', $configErrors);
+            if ($errors !== []) return $errors;
+        }
         if ($group === 'chat') {
-            if (!is_string($input['chat.provider'] ?? null) || !in_array($input['chat.provider'], ['website', 'openai', 'gemini', 'grok'], true)) {
+            if (!is_string($input['chat.provider'] ?? null) || !in_array($input['chat.provider'], ['website', 'openai', 'gemini', 'groq'], true)) {
                 $errors['chat.provider'] = 'Choose a supported assistant provider.';
             }
             foreach (\App\Services\ChatService::MODELS as $provider => $defaultModel) {
@@ -171,6 +197,7 @@ final class SettingsController
                 if (!empty($_POST['chat_clear_' . $provider])) Settings::set('encrypted.chat.' . $provider . '_key', '', $group);
             }
         }
+        if ($group === 'chat' && !empty($_POST['chat_clear_legacy_grok'])) Settings::set('encrypted.chat.grok_key', '', 'chat');
         if ($group === 'paypal' && !empty($_POST['paypal_clear_credentials'])) {
             Settings::set('encrypted.paypal.client_id', '', $group);
             Settings::set('encrypted.paypal.client_secret', '', $group);
@@ -178,6 +205,17 @@ final class SettingsController
         }
 
         return $errors;
+    }
+
+    public function diagnoseEmail(): never
+    {
+        Csrf::require();
+        $input = is_array($_POST['settings'] ?? null) ? $_POST['settings'] : [];
+        $errors = $this->applyGroup('mail', $input);
+        if ($errors !== []) { Session::set('_errors', $errors); Response::redirect(url('/admin/settings?tab=mail')); }
+        $result = Mailer::diagnose();
+        flash($result['ok'] ? 'success' : 'error', $result['message']);
+        Response::redirect(url('/admin/settings?tab=mail'));
     }
 
     public function testEmail(): never
@@ -195,12 +233,12 @@ final class SettingsController
         $body = '<p>This is a test email from the Thunder Mounts admin.</p><p>If you received it, transactional email is configured correctly.</p>';
         $sent = Mailer::send((string) $admin['email'], 'Thunder Mounts test email', $body);
         if ($sent) {
-            flash('success', 'Test email sent to ' . $admin['email'] . '.');
+            flash('success', 'Test email accepted for ' . $admin['email'] . '. Check the inbox/spam folder; provider acceptance is not delivery confirmation.');
         } else {
             $detail = (string) Database::value("SELECT error FROM email_log ORDER BY id DESC LIMIT 1", [], '');
             $message = 'The test email could not be sent.';
             if ($detail !== '') {
-                $message .= ' ' . mb_substr($detail, 0, 260);
+                $message .= ' ' . mb_substr($detail, 0, 900);
             }
             flash('error', $message);
         }

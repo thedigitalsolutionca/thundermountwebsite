@@ -281,7 +281,24 @@ Until shipping and tax are configured, checkout does **not** place an online ord
 ## Website assistant
 
 The storefront includes a source-linked website-content assistant. Optional Gemini,
-Grok, and OpenAI providers can be configured under **Admin → Settings → AI Assistant**.
+Groq, and OpenAI providers can be configured under **Admin → Settings → AI Assistant**.
 Keys are encrypted server-side; website-only mode needs no API credentials.
 See [CHATBOT.md](CHATBOT.md) for setup, privacy, rate limits, hosting requirements,
 and local regression checks.
+
+### Admin operations and delivery diagnostics
+
+- **Dashboard:** Today, Monday-based week, month, and custom inclusive dates (up to 366 days) use the configured store timezone. Revenue, sales chart and top sellers use `paid_at`; orders/new customers use `created_at`. Gross revenue includes shipping/tax and is before refunds. Open orders, low stock and attention queues are explicitly store-wide.
+- **Email delivery:** Admin → Email delivery lists failed, accepted/sent, and queued records, with recipient/date search and escaped message previews. A failed message with a retained body can be resent after explicit confirmation. Retries atomically claim and update the original record; queued messages cannot be resent or deleted. Check provider logs after a timeout before retrying: server acceptance is not inbox delivery. Retries use current transport and store reply-to, not the original contact's reply-to. A worker crash can leave a queued record; inspect provider activity before any manual database recovery.
+- **SMTP timeout (110):** This connection error occurs before authentication. In Settings → Email, verify hostname-only input, 465 + SSL or 587 + TLS, and use **Save & diagnose connection** to test greeting/TLS without logging in or sending. Ask the hosting provider to permit outbound SMTP; increasing the timeout does not bypass a firewall. TLS certificate verification remains enabled. **Save & send test email** checks actual provider acceptance and logs failures.
+- **HTTPS alternative:** Select Resend (HTTPS), enter an encrypted API key, and use a sender address on a verified Resend domain. Requires PHP cURL and outbound HTTPS to `api.resend.com:443`. SMTP is not automatically replaced by an unconfigured fallback. The API key is never rendered back in admin HTML. Provider idempotency reduces duplicate requests but does not guarantee permanent exactly-once delivery.
+- **Data management:** Preview and explicitly select at most 50 eligible records per request. Permanent deletion requires CSRF, the current administrator password, typed `DELETE`, and a confirmation dialog. Back up/export first. Cleanup rechecks eligibility transactionally and writes per-record and batch audit entries. Supported types: messages, sent/failed emails, cancelled never-paid orders, subscriptions, waitlist, reviews, abandoned carts (30+ days), inactive customers without order/dealer/cart links, sign-in logs (30+ days), and admin activity (90+ days). Paid/refunded/PayPal-linked orders, inventory/redemption trails, webhook records and admins are protected. Application log files and payment history are intentionally not exposed to bulk deletion. No schema migration is required.
+
+Local regression checks (never send external email):
+
+```sh
+APP_ENV=local php bin/check-chat.php
+APP_ENV=local php bin/check-operations.php
+```
+
+The operations suite uses an isolated in-memory SQLite database and checks date boundaries, deletion rollback/protection/auditing, mail retry states, SMTP settings validation, encrypted HTTPS keys and rendered dashboard totals. Production SMTP/provider delivery must still be verified on the deployed host.

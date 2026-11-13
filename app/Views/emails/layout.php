@@ -3,7 +3,7 @@
  * Shared transactional email shell.
  * Inline styles only — email clients are not kind to stylesheets.
  */
-$storeName = $name ?? 'Thunder Mounts';
+$storeName = setting('store.name', 'Thunder Mounts');
 ?>
 <!doctype html>
 <html lang="en">

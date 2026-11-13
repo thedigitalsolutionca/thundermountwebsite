@@ -5,7 +5,7 @@ The floating **Ask Thunder Mounts** assistant is enabled by default. It works wi
 ## Configure an optional AI provider
 
 1. Sign in to the admin and open **Settings → AI Assistant** (`/admin/settings?tab=chat`).
-2. Select **Website content only**, **Google Gemini**, **xAI Grok**, or **OpenAI**.
+2. Select **Website content only**, **Google Gemini**, **Groq**, or **OpenAI**.
 3. Enter the chosen provider's API key into its password field, and confirm a model ID available to your account. Suggested model IDs are editable; provider availability and billing can change.
 4. Save. A blank key field preserves the saved key. Use the explicit removal checkbox to delete one. You can also hide the assistant using the enable checkbox.
 
@@ -14,7 +14,7 @@ Keys are encrypted in the settings database with the application's existing AES-
 **Hosting requirements:** PHP cURL, a valid `APP_KEY`, and outbound HTTPS to the selected provider:
 
 - OpenAI: `api.openai.com/v1/chat/completions`
-- Grok: `api.x.ai/v1/chat/completions`
+- Groq: `api.groq.com/openai/v1/chat/completions`
 - Gemini: `generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
 
 The development workspace does not permit outbound calls to these hosts. Provider request formatting, parsing, encryption, and fallback are tested with fake transports; a live call must be checked on the deployment host with the merchant's own credentials.

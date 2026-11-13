@@ -4,13 +4,23 @@ use App\Core\Money;
 <div class="admin-head">
   <div>
     <h2>Good <?= date('H') < 12 ? 'morning' : (date('H') < 17 ? 'afternoon' : 'evening') ?></h2>
-    <p>Here is what is happening in the store today, <?= e(date('F j')) ?>.</p>
+    <p>Reporting period: <?= e($range['label']) ?> · <?= e(\App\Core\Config::get('app.timezone', 'America/Los_Angeles')) ?></p>
   </div>
   <div class="flex" style="gap:8px">
     <a class="btn btn-outline btn-sm" href="<?= url('/admin/products/create') ?>"><?= icon('plus') ?> Add product</a>
     <a class="btn btn-primary btn-sm" href="<?= url('/admin/orders') ?>">View orders</a>
   </div>
 </div>
+
+<form method="get" action="<?= url('/admin') ?>" class="admin-filters dashboard-date-filter">
+  <div class="field"><label for="dashboard-period">Reporting period</label><select class="select" id="dashboard-period" name="period">
+    <?php foreach (['today' => 'Today', 'week' => 'This week (Monday–today)', 'month' => 'This month', 'custom' => 'Custom dates'] as $value => $label): ?><option value="<?= $value ?>"<?= selected($value, $range['period']) ?>><?= e($label) ?></option><?php endforeach; ?>
+  </select></div>
+  <div class="field"><label for="dashboard-from">From (custom)</label><input class="input" id="dashboard-from" type="date" name="from" max="<?= date('Y-m-d') ?>" value="<?= e($range['from']) ?>"></div>
+  <div class="field"><label for="dashboard-to">To (custom)</label><input class="input" id="dashboard-to" type="date" name="to" max="<?= date('Y-m-d') ?>" value="<?= e($range['to']) ?>"></div>
+  <button class="btn btn-dark btn-sm" type="submit">Apply dates</button><a class="btn btn-ghost btn-sm" href="<?= url('/admin') ?>">Reset</a>
+</form>
+<?php if ($rangeError !== ''): ?><div class="admin-alert" role="alert"><?= e($rangeError) ?> Showing this month instead.</div><?php endif; ?>
 
 <?php if (!$readiness['ready']): ?>
   <div class="admin-alert">
@@ -27,22 +37,22 @@ use App\Core\Money;
 
 <div class="kpi-grid">
   <div class="kpi">
-    <span>Revenue today</span>
-    <strong><?= e(Money::format($revenueToday)) ?></strong>
-    <small><?= (int) $ordersToday ?> order<?= (int) $ordersToday === 1 ? '' : 's' ?> placed today</small>
+    <span>Gross revenue in period</span>
+    <strong><?= e(Money::format($revenue)) ?></strong>
+    <small><?= (int) $paidCount ?> paid orders · includes shipping/tax, before refunds</small>
   </div>
   <div class="kpi">
-    <span>Revenue this month</span>
-    <strong><?= e(Money::format($revenueMonth)) ?></strong>
-    <small>Paid orders only</small>
+    <span>Orders placed in period</span>
+    <strong><?= (int) $orderCount ?></strong>
+    <small>Avg. paid order: <?= e(Money::format($paidCount ? $revenue / $paidCount : 0)) ?></small>
   </div>
   <div class="kpi">
-    <span>Open orders</span>
+    <span>Open orders · all dates</span>
     <strong><?= (int) $openOrders ?></strong>
     <small><?= (int) $awaitingPayment ?> awaiting payment</small>
   </div>
   <div class="kpi">
-    <span>Customers</span>
+    <span>New customers in period</span>
     <strong><?= (int) $customers ?></strong>
     <small><?= (int) $pendingDealers ?> dealer application<?= (int) $pendingDealers === 1 ? '' : 's' ?> pending</small>
   </div>
@@ -51,7 +61,7 @@ use App\Core\Money;
 <div class="admin-grid-2">
   <div class="admin-card">
     <div class="admin-card-head">
-      <div><h3>Sales — last 14 days</h3><span>Paid order totals</span></div>
+      <div><h3>Sales — selected period</h3><span>Paid order totals · <?= $range['days'] > 31 ? '7-day buckets' : 'daily' ?></span></div>
       <a class="small bold" href="<?= url('/admin/orders') ?>">All orders</a>
     </div>
     <div class="chart">
@@ -65,8 +75,9 @@ use App\Core\Money;
   </div>
 
   <div class="admin-card">
-    <div class="admin-card-head"><div><h3>Needs attention</h3><span>Quick queue</span></div></div>
+    <div class="admin-card-head"><div><h3>Needs attention</h3><span>Current store-wide queues · all dates</span></div></div>
     <div class="queue">
+      <a href="<?= url('/admin/emails?status=failed') ?>"><span><?= icon('mail') ?> Failed emails</span><strong><?= (int) $failedEmails ?></strong></a>
       <a href="<?= url('/admin/orders?status=paid') ?>"><span><?= icon('package') ?> Orders to process</span><strong><?= (int) $openOrders ?></strong></a>
       <a href="<?= url('/admin/dealers?status=pending') ?>"><span><?= icon('users') ?> Dealer applications</span><strong><?= (int) $pendingDealers ?></strong></a>
       <a href="<?= url('/admin/messages') ?>"><span><?= icon('mail') ?> New messages</span><strong><?= (int) $newMessages ?></strong></a>
@@ -79,11 +90,11 @@ use App\Core\Money;
 <div class="admin-grid-2" style="grid-template-columns:1.5fr 1fr">
   <div class="admin-card">
     <div class="admin-card-head">
-      <div><h3>Recent orders</h3><span>Newest first</span></div>
+      <div><h3>Recent orders</h3><span>Selected period · newest first</span></div>
       <a class="small bold" href="<?= url('/admin/orders') ?>">View all</a>
     </div>
     <?php if ($recentOrders === []): ?>
-      <div class="admin-empty"><?= icon('package') ?><p>No orders yet. They will appear here.</p></div>
+      <div class="admin-empty"><?= icon('package') ?><p>No orders in this period. Try a different date range.</p></div>
     <?php else: ?>
       <div class="table-wrap">
         <table class="data-table">
@@ -105,7 +116,7 @@ use App\Core\Money;
 
   <div class="stack">
     <div class="admin-card">
-      <div class="admin-card-head"><div><h3>Top sellers</h3><span>All time, paid orders</span></div></div>
+      <div class="admin-card-head"><div><h3>Top sellers</h3><span>Selected period · paid orders</span></div></div>
       <?php if ($topProducts === []): ?>
         <div class="admin-empty"><p>Sales data appears after the first paid order.</p></div>
       <?php else: ?>
